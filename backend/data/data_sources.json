@@ -1,0 +1,17 @@
+[
+  {
+    "source_id": "osm",
+    "provider_name": "OpenStreetMap contributors",
+    "dataset_name": "OpenStreetMap map data",
+    "source_url": "https://www.openstreetmap.org/",
+    "access_method": "Public map data and documented APIs",
+    "publication_date": "2026-01-01",
+    "geographic_coverage": "Mapped features in the target catchment",
+    "limitations": [
+      "Rural business and facility mapping may be incomplete.",
+      "Absence from the dataset does not prove real-world absence."
+    ],
+    "update_frequency": "Continuous, subject to contributor updates",
+    "last_verified": "2026-09-08"
+  }
+]
