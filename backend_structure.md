@@ -1,4 +1,4 @@
-# GramVyapar --- GOLD STATE Backend Structure
+# VyaparSathi --- GOLD STATE Backend Structure
 
 ## Final Implementation Contract --- Do Not Change Architecture
 
@@ -11,7 +11,7 @@ unless a deliberate v2 architecture decision is made.
 
 # 1. Golden Principle
 
-GramVyapar is a **data-driven rural enterprise decision-support
+VyaparSathi is a **data-driven rural enterprise decision-support
 platform**, not a generic AI chatbot.
 
 The backend follows:
@@ -49,7 +49,7 @@ Do not invent data to make a feature appear intelligent.
 # 2. GOLD STATE Repository
 
 ``` text
-GramVyapar/
+VyaparSathi/
 │
 ├── backend/
 │   │
@@ -1126,7 +1126,7 @@ Final Report
 ```
 
 This repository structure and architecture are the **single
-implementation contract** for the GramVyapar backend.
+implementation contract** for the VyaparSathi backend.
 
 No feature should be added merely because it sounds impressive. Every
 feature must have:

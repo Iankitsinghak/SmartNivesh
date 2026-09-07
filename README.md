@@ -1,8 +1,8 @@
-# GramVyapar
+# VyaparSathi
 
 **AI-powered business feasibility and smart financing assistant for rural entrepreneurs.**
 
-GramVyapar is a data-driven decision-support platform designed to help rural and semi-urban entrepreneurs evaluate business opportunities, understand local market dynamics, and make evidence-backed financial decisions.
+VyaparSathi is a data-driven decision-support platform designed to help rural and semi-urban entrepreneurs evaluate business opportunities, understand local market dynamics, and make evidence-backed financial decisions.
 
 ![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Production-009688.svg)
@@ -27,7 +27,7 @@ Operating on assumptions leads to poor business selection, unrealistic project s
 
 ## 3. Solution
 
-GramVyapar acts as a sophisticated decision-support platform. It replaces assumptions with data, evaluating businesses through a modular intelligence pipeline that includes:
+VyaparSathi acts as a sophisticated decision-support platform. It replaces assumptions with data, evaluating businesses through a modular intelligence pipeline that includes:
 
 * Hyper-local market intelligence
 * Demographic analysis
@@ -42,14 +42,14 @@ GramVyapar acts as a sophisticated decision-support platform. It replaces assump
 * Risk analysis and readiness assessment
 * AI-powered explanations
 
-GramVyapar strictly follows a robust operational philosophy:
+VyaparSathi strictly follows a robust operational philosophy:
 **Calculate → Validate → Explain → Recommend**
 
 ---
 
 ## 4. How It Works
 
-GramVyapar processes decisions through a deterministic pipeline before interpreting them with AI.
+VyaparSathi processes decisions through a deterministic pipeline before interpreting them with AI.
 
 ```mermaid
 flowchart TD
@@ -72,7 +72,7 @@ flowchart TD
 
 ## 5. Local Area Intelligence
 
-The Local Area Intelligence Engine is the core capability of GramVyapar. It dynamically evaluates a selected business against its immediate and extended geographic market.
+The Local Area Intelligence Engine is the core capability of VyaparSathi. It dynamically evaluates a selected business against its immediate and extended geographic market.
 
 ### Geographic Market Zones
 * **0–2 km** — Immediate Local Market
@@ -101,11 +101,11 @@ The engine aggregates points of interest to assess infrastructure and ambient de
 * Industrial, Residential, and Tourist locations
 
 ### Existing Business Intelligence
-GramVyapar maps businesses to evaluate:
+VyaparSathi maps businesses to evaluate:
 * Competition density and Market activity
 * Complementary demand and Nearby commercial activity
 
-*(Note: GramVyapar maps registered or known businesses; this does not claim to represent every informal or unregistered real-world entity.)*
+*(Note: VyaparSathi maps registered or known businesses; this does not claim to represent every informal or unregistered real-world entity.)*
 
 ---
 
@@ -120,7 +120,7 @@ For example, if analyzing a **Hotel**:
 * **Hotel → Taxi:** Potential demand generator
 
 **One generic intelligence engine, many configurable business categories.** 
-GramVyapar uses configurable category definitions instead of hardcoding separate engines for every business type.
+VyaparSathi uses configurable category definitions instead of hardcoding separate engines for every business type.
 
 ---
 
@@ -144,7 +144,7 @@ This results in a **Market Gap Score** and a **Market Opportunity Score**. These
 
 ## 8. Data Philosophy
 
-GramVyapar is built on a foundation of data integrity.
+VyaparSathi is built on a foundation of data integrity.
 
 ### Public-Data First
 We prioritize reliable, open, and legitimately accessible data sources.
@@ -170,7 +170,7 @@ Every meaningful piece of external data preserves provenance:
 
 **AI explains the decision; it does not invent the decision.**
 
-AI is **not the source of truth** in GramVyapar. 
+AI is **not the source of truth** in VyaparSathi. 
 Deterministic backend logic calculates all financial values, scheme rules, eligibility logic, scores, and decision inputs.
 
 AI is strictly relegated to:
@@ -186,7 +186,7 @@ In the absence of an AI connection, the system gracefully falls back to structur
 
 ## 10. Architecture
 
-GramVyapar is structured as a **Modular Monolith**.
+VyaparSathi is structured as a **Modular Monolith**.
 
 ```text
 Frontend
@@ -260,7 +260,7 @@ Major modular domains include:
 ## 13. Project Structure
 
 ```text
-GramVyapar/
+VyaparSathi/
 ├── backend/
 │   ├── app/
 │   │   ├── api/
@@ -310,7 +310,7 @@ GramVyapar/
 
 ## 15. Testing
 
-GramVyapar ensures deterministic calculations remain accurate through automated testing. Areas covered include:
+VyaparSathi ensures deterministic calculations remain accurate through automated testing. Areas covered include:
 * Geographic boundaries and distance decay (`test_geo.py`)
 * Market and competition calculations (`test_market.py`, `test_competition.py`)
 * Opportunity scoring and AI validation fallbacks
@@ -354,7 +354,7 @@ PYTHONPATH=. pytest tests/
 
 ## 18. SIH / Impact Positioning
 
-GramVyapar directly addresses the information asymmetry faced by rural entrepreneurs. By providing better local market intelligence and financial understanding, the platform encourages:
+VyaparSathi directly addresses the information asymmetry faced by rural entrepreneurs. By providing better local market intelligence and financial understanding, the platform encourages:
 * Better business selection based on true geographic demand.
 * Responsible use of AI for rural economic empowerment.
 * Improved financial sizing to match market reality, reducing loan default risk.
@@ -364,7 +364,7 @@ GramVyapar directly addresses the information asymmetry faced by rural entrepren
 
 ## 19. Disclaimer
 
-**GramVyapar provides decision-support and estimates based on available data.** It does not guarantee business success, revenue, loan approval, or financial outcomes. Government scheme eligibility and final lending decisions remain subject to the relevant authority/lender and applicable rules.
+**VyaparSathi provides decision-support and estimates based on available data.** It does not guarantee business success, revenue, loan approval, or financial outcomes. Government scheme eligibility and final lending decisions remain subject to the relevant authority/lender and applicable rules.
 
 ---
 
