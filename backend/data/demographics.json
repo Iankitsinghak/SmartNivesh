@@ -1,0 +1,17 @@
+[
+  {
+    "location_id": "LOC-001",
+    "total_population": 50000,
+    "male_population": 26000,
+    "female_population": 24000,
+    "age_0_6": 5000,
+    "age_7_17": 8000,
+    "age_18_24": 7000,
+    "age_25_44": 15000,
+    "age_45_59": 10000,
+    "age_60_plus": 5000,
+    "households": 12000,
+    "working_population": 25000,
+    "literacy_rate": 0.85
+  }
+]

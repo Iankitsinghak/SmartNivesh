@@ -1,0 +1,51 @@
+[
+  {
+    "category_id": "CAT-001",
+    "name": "Restaurant",
+    "capital_min": 100000,
+    "capital_max": 500000,
+    "target_segments": [
+      {"segment": "working_population", "weight": 0.4},
+      {"segment": "age_18_24", "weight": 0.3},
+      {"segment": "age_25_44", "weight": 0.3}
+    ],
+    "relevant_poi_types": ["COLLEGE", "HOSPITAL", "TOURIST_SITE", "MARKET", "RAILWAY_STATION"],
+    "competitor_categories": ["CAT-001"],
+    "complementary_categories": ["CAT-002"],
+    "supplier_categories": [],
+    "seasonality_profile": {"peak": ["SUMMER", "FESTIVAL"], "low": ["MONSOON"]},
+    "distribution_profile": {"requires_wholesale": true}
+  },
+  {
+    "category_id": "CAT-002",
+    "name": "Hotel",
+    "capital_min": 500000,
+    "capital_max": 2000000,
+    "target_segments": [
+      {"segment": "working_population", "weight": 0.5}
+    ],
+    "relevant_poi_types": ["TOURIST_SITE", "RAILWAY_STATION", "BUS_STAND"],
+    "competitor_categories": ["CAT-002"],
+    "complementary_categories": ["CAT-001"],
+    "supplier_categories": [],
+    "seasonality_profile": {"peak": ["FESTIVAL", "WINTER"], "low": ["SUMMER"]},
+    "distribution_profile": {"requires_wholesale": false}
+  },
+  {
+    "category_id": "CAT-003",
+    "name": "Cosmetics",
+    "capital_min": 50000,
+    "capital_max": 200000,
+    "target_segments": [
+      {"segment": "female_population", "weight": 0.5},
+      {"segment": "age_18_24", "weight": 0.25},
+      {"segment": "age_25_44", "weight": 0.25}
+    ],
+    "relevant_poi_types": ["MARKET", "COLLEGE", "RESIDENTIAL_AREA"],
+    "competitor_categories": ["CAT-003"],
+    "complementary_categories": ["CAT-004"],
+    "supplier_categories": [],
+    "seasonality_profile": {"peak": ["FESTIVAL", "WEDDING"], "low": []},
+    "distribution_profile": {"requires_wholesale": true}
+  }
+]

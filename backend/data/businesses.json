@@ -1,0 +1,30 @@
+[
+  {
+    "business_id": "BUS-001",
+    "name": "Sharma Restaurant",
+    "category_id": "CAT-001",
+    "latitude": 28.7060,
+    "longitude": 77.1040
+  },
+  {
+    "business_id": "BUS-002",
+    "name": "City Stay Hotel",
+    "category_id": "CAT-002",
+    "latitude": 28.7070,
+    "longitude": 77.1050
+  },
+  {
+    "business_id": "BUS-003",
+    "name": "Faraway Restaurant",
+    "category_id": "CAT-001",
+    "latitude": 28.8000,
+    "longitude": 77.2000
+  },
+  {
+    "business_id": "BUS-004",
+    "name": "Nearby Cosmetics",
+    "category_id": "CAT-003",
+    "latitude": 28.7080,
+    "longitude": 77.1030
+  }
+]
