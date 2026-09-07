@@ -1,0 +1,13 @@
+[
+  {
+    "location_id": "LOC-001",
+    "latitude": 28.7041,
+    "longitude": 77.1025,
+    "hierarchy": {
+      "country": "India",
+      "state": "Delhi",
+      "district": "North West Delhi",
+      "village_town": "Model Town"
+    }
+  }
+]

@@ -1,0 +1,30 @@
+[
+  {
+    "place_id": "POI-001",
+    "name": "Local College",
+    "poi_type": "COLLEGE",
+    "latitude": 28.7050,
+    "longitude": 77.1030
+  },
+  {
+    "place_id": "POI-002",
+    "name": "Main Market",
+    "poi_type": "MARKET",
+    "latitude": 28.7100,
+    "longitude": 77.1100
+  },
+  {
+    "place_id": "POI-003",
+    "name": "City Hospital",
+    "poi_type": "HOSPITAL",
+    "latitude": 28.7300,
+    "longitude": 77.1300
+  },
+  {
+    "place_id": "POI-004",
+    "name": "Distant Tourist Site",
+    "poi_type": "TOURIST_SITE",
+    "latitude": 28.8000,
+    "longitude": 77.2000
+  }
+]
