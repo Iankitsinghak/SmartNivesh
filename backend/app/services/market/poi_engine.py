@@ -1,20 +1,36 @@
 import json
-from typing import List, Dict, Any
+from typing import List
 from app.schemas.place import Place
 from app.schemas.business import BusinessCategory
-from app.schemas.market import POIResult
 from app.utils.geo import calculate_distance
+from app.utils.provenance import ConfidenceLevel
+from app.schemas.market import POIResult
+
+from app.core.database import SessionLocal
+from app.models.place import PlaceRecord
 
 def get_all_places() -> List[Place]:
+    db = SessionLocal()
     places = []
     try:
-        with open("data/places.json", "r") as f:
-            data = json.load(f)
-            for item in data:
-                places.append(Place(**item))
+        records = db.query(PlaceRecord).all()
+        for r in records:
+            places.append(Place(
+                place_id=r.place_id,
+                category_id=r.category,
+                name=r.name,
+                latitude=r.latitude,
+                longitude=r.longitude,
+                source_id=r.source_id,
+                dataset_date=r.dataset_date,
+                provenance=r.provenance
+            ))
     except Exception:
         pass
+    finally:
+        db.close()
     return places
+
 
 def analyze_pois(lat: float, lon: float, category: BusinessCategory, max_radius: float = 10.0) -> POIResult:
     all_places = get_all_places()

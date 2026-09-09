@@ -1,7 +1,7 @@
-from app.schemas.common import DataSource, Evidence
+# Removed top level import of app.schemas.common
 
-
-def validate_source(source: DataSource) -> list[str]:
+def validate_source(source) -> list[str]:
+    from app.schemas.common import DataSource
     missing: list[str] = []
     required = {
         "source_id": source.source_id,
@@ -17,7 +17,8 @@ def validate_source(source: DataSource) -> list[str]:
     return missing
 
 
-def validate_evidence(evidence: Evidence) -> list[str]:
+def validate_evidence(evidence) -> list[str]:
+    from app.schemas.common import Evidence
     missing = validate_source(evidence.source)
     if evidence.value is None:
         missing.append("value")

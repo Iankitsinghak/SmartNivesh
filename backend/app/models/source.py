@@ -1,16 +1,16 @@
-from dataclasses import dataclass
-from datetime import date
+from sqlalchemy import Column, String, Date, JSON
+from app.models.base import Base
 
+class SourceRecord(Base):
+    __tablename__ = "sources"
 
-@dataclass(frozen=True)
-class SourceRecord:
-    source_id: str
-    provider_name: str
-    dataset_name: str
-    source_url: str
-    access_method: str
-    publication_date: date
-    geographic_coverage: str
-    limitations: tuple[str, ...]
-    update_frequency: str | None = None
-    last_verified: date | None = None
+    source_id = Column(String, primary_key=True, index=True)
+    provider_name = Column(String, nullable=False)
+    dataset_name = Column(String, nullable=False)
+    source_url = Column(String, nullable=False)
+    access_method = Column(String, nullable=False)
+    publication_date = Column(Date, nullable=False)
+    geographic_coverage = Column(String, nullable=False)
+    limitations = Column(JSON, nullable=False)  # list of strings
+    update_frequency = Column(String, nullable=True)
+    last_verified = Column(Date, nullable=True)

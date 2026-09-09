@@ -1,6 +1,6 @@
 import unittest
 
-from test_opportunity import evidence
+from tests.test_opportunity import evidence
 from app.schemas.common import Location
 from app.services.ai.explanation_service import explain
 from app.services.opportunity.opportunity_engine import analyze_geographic_service_gap

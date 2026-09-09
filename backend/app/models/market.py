@@ -1,14 +1,15 @@
-from dataclasses import dataclass
-
+from sqlalchemy import Column, Integer, String, Float, Enum
+from app.models.base import Base
 from app.core.enums import Provenance
 
+class ActivityRecord(Base):
+    __tablename__ = "activities"
 
-@dataclass(frozen=True)
-class ActivityRecord:
-    indicator: str
-    value: float
-    unit: str
-    geographic_scope: str
-    source_id: str
-    dataset_date: str
-    provenance: Provenance
+    id = Column(Integer, primary_key=True, index=True)
+    indicator = Column(String, index=True, nullable=False)
+    value = Column(Float, nullable=False)
+    unit = Column(String, nullable=False)
+    geographic_scope = Column(String, nullable=False)
+    source_id = Column(String, nullable=False)
+    dataset_date = Column(String, nullable=False)
+    provenance = Column(Enum(Provenance), nullable=False)

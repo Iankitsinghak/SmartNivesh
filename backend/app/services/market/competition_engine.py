@@ -6,15 +6,30 @@ from app.utils.provenance import ConfidenceLevel
 from app.schemas.market import CompetitionResult
 from app.utils.normalization import get_generic_level, clamp_score
 
+from app.core.database import SessionLocal
+from app.models.business import BusinessRecord
+
 def get_all_businesses() -> List[Business]:
+    db = SessionLocal()
     businesses = []
     try:
-        with open("data/businesses.json", "r") as f:
-            data = json.load(f)
-            for item in data:
-                businesses.append(Business(**item))
+        # Load from the new PostgreSQL/SQLite DB
+        records = db.query(BusinessRecord).all()
+        for r in records:
+            businesses.append(Business(
+                business_id=r.business_id,
+                category_id=r.category,
+                name=r.name,
+                latitude=r.latitude,
+                longitude=r.longitude,
+                source_id=r.source_id,
+                dataset_date=r.dataset_date,
+                provenance=r.provenance
+            ))
     except Exception:
         pass
+    finally:
+        db.close()
     return businesses
 
 def analyze_competition(lat: float, lon: float, category: BusinessCategory, radius_km: float = 10.0) -> CompetitionResult:
@@ -49,3 +64,4 @@ def analyze_competition(lat: float, lon: float, category: BusinessCategory, radi
         competition_level=level,
         confidence=ConfidenceLevel.MEDIUM if all_businesses else ConfidenceLevel.LOW
     )
+

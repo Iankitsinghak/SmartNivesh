@@ -4,19 +4,26 @@ from app.schemas.demographic import Demographics
 from app.schemas.business import BusinessCategory
 from app.utils.provenance import ConfidenceLevel
 from app.utils.normalization import clamp_score
+from app.core.database import SessionLocal
+from app.models.demographic import DemographicRecord
 
 def get_demographics(location_id: str) -> Optional[Demographics]:
+    db = SessionLocal()
     try:
-        with open("data/demographics.json", "r") as f:
-            data = json.load(f)
-            for item in data:
-                if item["location_id"] == location_id:
-                    return Demographics(**item)
+        records = db.query(DemographicRecord).filter(DemographicRecord.location_id == location_id).all()
+        if records:
+            data = {"location_id": location_id}
+            for r in records:
+                data[r.indicator] = r.value
+            return Demographics(**data)
     except Exception:
         pass
+    finally:
+        db.close()
     return None
 
 def analyze_demographics(demographics: Demographics, category: BusinessCategory) -> Dict[str, Any]:
+
     """
     Matches demographics against the target_segments defined in BusinessCategory.
     Calculates a demographic_fit score (0-100).

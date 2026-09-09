@@ -1,15 +1,15 @@
-from dataclasses import dataclass
-
+from sqlalchemy import Column, String, Float, Enum
+from app.models.base import Base
 from app.core.enums import Provenance
 
+class BusinessRecord(Base):
+    __tablename__ = "businesses"
 
-@dataclass(frozen=True)
-class BusinessRecord:
-    business_id: str
-    category: str
-    name: str
-    latitude: float
-    longitude: float
-    source_id: str
-    dataset_date: str
-    provenance: Provenance
+    business_id = Column(String, primary_key=True, index=True)
+    category = Column(String, index=True, nullable=False)
+    name = Column(String, nullable=False)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    source_id = Column(String, nullable=False)
+    dataset_date = Column(String, nullable=False)
+    provenance = Column(Enum(Provenance), nullable=False)

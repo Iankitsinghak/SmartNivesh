@@ -1,15 +1,15 @@
-from dataclasses import dataclass
-
+from sqlalchemy import Column, String, Float, Enum
+from app.models.base import Base
 from app.core.enums import Provenance
 
+class PlaceRecord(Base):
+    __tablename__ = "places"
 
-@dataclass(frozen=True)
-class PlaceRecord:
-    place_id: str
-    category: str
-    name: str
-    latitude: float
-    longitude: float
-    source_id: str
-    dataset_date: str
-    provenance: Provenance
+    place_id = Column(String, primary_key=True, index=True)
+    category = Column(String, index=True, nullable=False)
+    name = Column(String, nullable=False)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    source_id = Column(String, nullable=False)
+    dataset_date = Column(String, nullable=False)
+    provenance = Column(Enum(Provenance), nullable=False)

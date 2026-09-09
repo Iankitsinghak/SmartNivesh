@@ -28,3 +28,10 @@ class Provenance(str, Enum):
 class EvidenceSufficiency(str, Enum):
     SUFFICIENT = "sufficient"
     INSUFFICIENT = "insufficient"
+
+
+class DataStatus(str, Enum):
+    CALCULATED = "CALCULATED"
+    ESTIMATED = "ESTIMATED"
+    ASSUMPTION = "ASSUMPTION"
+    UNKNOWN = "UNKNOWN"
