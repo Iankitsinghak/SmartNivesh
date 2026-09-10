@@ -8,7 +8,8 @@ router = APIRouter(prefix="/api/finance", tags=["Financial Intelligence"])
 async def analyze_finance_endpoint(request: FinancialAnalysisRequest):
     """
     Analyzes the financial feasibility of a proposed business.
-    Calculates project cost, EMI, repayment coverage, and scenarios.
+    Calculates project cost, loan requirement, EMI, and repayment schedule
+    based on the available margin capital.
     """
     try:
         response = analyze_finance(request)
@@ -17,3 +18,4 @@ async def analyze_finance_endpoint(request: FinancialAnalysisRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal Server Error: " + str(e))
+

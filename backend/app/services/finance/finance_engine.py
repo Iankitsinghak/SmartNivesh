@@ -1,77 +1,115 @@
-from app.schemas.finance import FinancialAnalysisRequest, FinancialAnalysisResponse, FinancialFeasibilityIndicators, ValueWithStatus
-from app.core.enums import DataStatus
-from app.services.finance.loan_engine import calculate_project_cost, calculate_loan_amount
-from app.services.finance.repayment import calculate_repayment
-from app.services.finance.scenarios import generate_all_scenarios
-from app.services.finance.recommended_financing import calculate_recommended_financing
+from typing import List
+from app.schemas.finance import FinancialAnalysisRequest, FinancialAnalysisResponse, RepaymentScheduleRow
+from app.core.enums import FinancialStatus, FinancingBand
+from app.utils.provenance import DataClassification, ConfidenceLevel
+from app.schemas.common import DataProvenance
+from app.services.finance.loan_engine import (
+    derive_project_cost,
+    derive_loan_requirement,
+    determine_financing_band
+)
+from app.services.finance.emi import calculate_deterministic_emi
+from app.services.finance.repayment import generate_amortization_schedule
 
 def analyze_finance(request: FinancialAnalysisRequest) -> FinancialAnalysisResponse:
-    # 1. Loan Engine
-    project_cost = calculate_project_cost(request.available_margin, 0.10)
-    margin = request.available_margin
-    loan_amount = calculate_loan_amount(project_cost, 0.10)
-    
-    # 2. EMI & Repayment
-    repayment_data = calculate_repayment(loan_amount, request.loan_assumptions.annual_interest_rate, request.loan_assumptions.tenure_months)
-    monthly_emi = repayment_data["monthly_emi"]
-    
-    # 3. Scenarios
-    base_scen, cons_scen, opt_scen = generate_all_scenarios(request.revenue_assumptions, request.cost_assumptions, monthly_emi)
-    
-    # 4. Break-even
-    break_even_val = None
-    break_even_status = DataStatus.UNKNOWN
-    
-    if (request.revenue_assumptions.selling_price is not None and 
-        request.cost_assumptions.variable_cost_ratio is not None and 
-        request.cost_assumptions.fixed_costs_per_month is not None):
-        
-        vc_per_unit = request.revenue_assumptions.selling_price * request.cost_assumptions.variable_cost_ratio
-        contribution_margin = request.revenue_assumptions.selling_price - vc_per_unit
-        
-        if contribution_margin > 0:
-            break_even_val = round(request.cost_assumptions.fixed_costs_per_month / contribution_margin, 2)
-            break_even_status = DataStatus.CALCULATED
-            
-    # Working capital
-    working_capital_val = None
-    working_capital_status = DataStatus.UNKNOWN
-    if request.cost_assumptions.initial_inventory is not None and request.cost_assumptions.operating_buffer_months is not None:
-        fixed_costs = request.cost_assumptions.fixed_costs_per_month or 0.0
-        working_capital_val = round(request.cost_assumptions.initial_inventory + (request.cost_assumptions.operating_buffer_months * fixed_costs), 2)
-        working_capital_status = DataStatus.ESTIMATED
-    
-    # 5. Recommendation
-    base_profit = base_scen.operating_profit.value
-    cons_profit = cons_scen.operating_profit.value
-    
-    recommendation = calculate_recommended_financing(
-        project_cost=project_cost,
-        margin_percentage=0.10,
-        base_profit=base_profit,
-        conservative_profit=cons_profit,
-        monthly_emi=monthly_emi,
-        loan_amount=loan_amount
+    margin = request.available_margin_capital
+
+    if margin <= 0:
+        return FinancialAnalysisResponse(
+            available_margin_capital=margin,
+            calculated_project_cost=0.0,
+            calculated_loan_requirement=0.0,
+            applicable_financing_band=FinancingBand.UNSUPPORTED,
+            actual_modeled_loan=0.0,
+            financing_gap=0.0,
+            monthly_emi=0.0,
+            total_repayment=0.0,
+            total_interest=0.0,
+            repayment_schedule=[],
+            financial_status=FinancialStatus.INVALID_INPUT
+        )
+
+    # 1. Project Cost & Loan Requirement
+    project_cost = derive_project_cost(margin)
+    loan_requirement = derive_loan_requirement(project_cost)
+
+    # 2. Determine Financing Band
+    band, params = determine_financing_band(project_cost)
+
+    if band == FinancingBand.UNSUPPORTED:
+        return FinancialAnalysisResponse(
+            available_margin_capital=margin,
+            calculated_project_cost=project_cost,
+            calculated_loan_requirement=loan_requirement,
+            applicable_financing_band=band,
+            actual_modeled_loan=0.0,
+            financing_gap=loan_requirement,
+            monthly_emi=0.0,
+            total_repayment=0.0,
+            total_interest=0.0,
+            repayment_schedule=[],
+            financial_status=FinancialStatus.PROJECT_RANGE_EXCEEDED
+        )
+
+    # Extract parameters
+    interest_rate = params.get("interest_rate", 0.0)
+    tenure_months = params.get("tenure_months", 0)
+    moratorium_months = params.get("moratorium_months", 0)
+    max_agency_loan = params.get("maximum_agency_loan", 0.0)
+
+    # 3. Loan Cap Logic
+    if loan_requirement > max_agency_loan:
+        actual_modeled_loan = max_agency_loan
+        financing_gap = round(loan_requirement - actual_modeled_loan, 2)
+        status = FinancialStatus.LOAN_CAP_EXCEEDED
+    else:
+        actual_modeled_loan = loan_requirement
+        financing_gap = 0.0
+        status = FinancialStatus.SUPPORTED
+
+    # 4. EMI & Repayment
+    monthly_emi = calculate_deterministic_emi(
+        principal=actual_modeled_loan, 
+        annual_interest_rate=interest_rate, 
+        tenure_months=tenure_months
     )
-    
-    financial_score_val = 100.0 if recommendation.financial_feasibility == "FEASIBLE" else 50.0
-    
-    indicators = FinancialFeasibilityIndicators(
-        financial_score=ValueWithStatus(value=financial_score_val, status=DataStatus.CALCULATED),
-        break_even_units=ValueWithStatus(value=break_even_val, status=break_even_status),
-        working_capital_requirement=ValueWithStatus(value=working_capital_val, status=working_capital_status)
+
+    schedule = generate_amortization_schedule(
+        principal=actual_modeled_loan,
+        annual_interest_rate=interest_rate,
+        tenure_months=tenure_months,
+        monthly_emi=monthly_emi
     )
-    
+
+    total_repayment = round(sum(row.payment for row in schedule), 2)
+    total_interest = round(sum(row.interest_component for row in schedule), 2)
+
+    # 5. Provenance
+    provenance = [
+        DataProvenance(
+            source_id="problem_statement",
+            source_name="Vyapar Sath Financial Rules",
+            data_type=DataClassification.VERIFIED,
+            confidence=ConfidenceLevel.HIGH
+        )
+    ]
+
     return FinancialAnalysisResponse(
-        project_cost=ValueWithStatus(value=project_cost, status=DataStatus.CALCULATED),
-        margin_contribution=ValueWithStatus(value=margin, status=DataStatus.CALCULATED),
-        loan_amount=ValueWithStatus(value=loan_amount, status=DataStatus.CALCULATED),
-        monthly_emi=ValueWithStatus(value=monthly_emi, status=DataStatus.CALCULATED),
-        total_repayment=ValueWithStatus(value=repayment_data["total_repayment"], status=DataStatus.CALCULATED),
-        total_interest=ValueWithStatus(value=repayment_data["total_interest"], status=DataStatus.CALCULATED),
-        base_scenario=base_scen,
-        conservative_scenario=cons_scen,
-        optimistic_scenario=opt_scen,
-        recommended_financing=recommendation,
-        feasibility_indicators=indicators
+        available_margin_capital=margin,
+        calculated_project_cost=project_cost,
+        calculated_loan_requirement=loan_requirement,
+        applicable_financing_band=band,
+        interest_rate=interest_rate,
+        tenure_months=tenure_months,
+        moratorium_months=moratorium_months,
+        maximum_agency_loan=max_agency_loan,
+        actual_modeled_loan=actual_modeled_loan,
+        financing_gap=financing_gap,
+        monthly_emi=monthly_emi,
+        total_repayment=total_repayment,
+        total_interest=total_interest,
+        repayment_schedule=schedule,
+        financial_status=status,
+        data_classification=DataClassification.CALCULATED,
+        provenance=provenance
     )

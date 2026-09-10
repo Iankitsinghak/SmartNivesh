@@ -1,79 +1,120 @@
 import pytest
-from app.services.finance.emi import calculate_emi
-from app.services.finance.loan_engine import calculate_project_cost, calculate_loan_amount
-from app.services.finance.repayment import calculate_repayment, calculate_repayment_coverage
 from app.services.finance.finance_engine import analyze_finance
-from app.schemas.finance import FinancialAnalysisRequest, RevenueAssumptions, CostAssumptions, LoanAssumptions
-from fastapi.testclient import TestClient
-from app.main import app
+from app.schemas.finance import FinancialAnalysisRequest
+from app.core.enums import FinancialStatus, FinancingBand
+from app.services.finance.emi import calculate_deterministic_emi
 
-client = TestClient(app)
+# --- Test 1 — Basic Micro Finance ---
+def test_micro_finance_basic():
+    # Capital = 10,000 -> Project Cost = 1,00,000 (within 1.4L limit)
+    request = FinancialAnalysisRequest(available_margin_capital=10000.0)
+    response = analyze_finance(request)
 
-def test_project_cost_calculation():
-    assert calculate_project_cost(100000, 0.10) == 1000000.0
-    assert calculate_project_cost(0, 0.10) == 0.0
-    with pytest.raises(ValueError):
-        calculate_project_cost(-100, 0.10)
+    assert response.calculated_project_cost == 100000.0
+    assert response.calculated_loan_requirement == 90000.0
+    assert response.applicable_financing_band == FinancingBand.MICRO_FINANCE
+    assert response.interest_rate == 6.5
+    assert response.tenure_months == 36
+    assert response.moratorium_months == 3
+    assert response.maximum_agency_loan == 125000.0
+    assert response.actual_modeled_loan == 90000.0
+    assert response.financing_gap == 0.0
+    assert response.financial_status == FinancialStatus.SUPPORTED
 
-def test_loan_calculation():
-    assert calculate_loan_amount(1000000, 0.10) == 900000.0
+# --- Test 2 — Term Loan ---
+def test_term_loan_basic():
+    # Capital = 1,00,000 -> Project Cost = 10,00,000
+    request = FinancialAnalysisRequest(available_margin_capital=100000.0)
+    response = analyze_finance(request)
 
-def test_emi_calculation():
-    # P = 900000, r = 8% / 12 = 0.006666, n = 84 (7 years)
-    emi = calculate_emi(900000, 8.0, 84)
-    assert emi == 14027.59
+    assert response.calculated_project_cost == 1000000.0
+    assert response.calculated_loan_requirement == 900000.0
+    assert response.applicable_financing_band == FinancingBand.TERM_LOAN
+    assert response.interest_rate == 8.0
+    assert response.tenure_months == 84
+    assert response.moratorium_months == 6
+    assert response.maximum_agency_loan == 4500000.0
+
+    expected_emi = calculate_deterministic_emi(900000.0, 8.0, 84)
+    assert response.monthly_emi == expected_emi
+
+# --- Test 3 — Loan Cap ---
+def test_loan_cap_exceeded():
+    # Capital = 6,00,000 -> Project Cost = 60,00,000. Wait, Project cost limit is 50L.
+    # To hit loan cap but stay under project cost limit: 
+    # Term loan max project cost = 50,00,000
+    # 90% of 50,00,000 = 45,00,000
+    # Actually, if project cost is 50L, loan requirement is 45L which is exactly the max agency loan. 
+    # Let's adjust TERM_LOAN_MAX_COST temporarily or just use a scenario where loan requirement > max agency loan
+    # But wait, max agency loan is exactly 90% of max project cost for both schemes!
+    # Term Loan max cost = 50L -> 90% = 45L. Max loan = 45L. So gap is never natively > 0 unless rules are violated.
+    # Let's test a theoretical boundary. If we force max_agency_loan to be lower, or if we just test the branch by simulating an artificially high requirement.
+    # Wait, the user specifically asked: "Create a case where calculated financing exceeds the scheme's maximum agency loan... Verify calculated requirement != actual modeled loan and financing_gap > 0"
+    # Is it possible to have project cost <= 50L but loan requirement > 45L?
+    # No, because 50L * 90% = 45L.
+    # What about Micro Finance?
+    # Max cost = 1,40,000 -> 90% = 1,26,000. Max agency loan = 1,25,000.
+    # AH! 1.26L > 1.25L. Perfect!
+    request = FinancialAnalysisRequest(available_margin_capital=14000.0)
+    response = analyze_finance(request)
+
+    assert response.calculated_project_cost == 140000.0
+    assert response.calculated_loan_requirement == 126000.0
+    assert response.actual_modeled_loan == 125000.0
+    assert response.financing_gap == 1000.0
+    assert response.financial_status == FinancialStatus.LOAN_CAP_EXCEEDED
+
+# --- Test 4 — Project Cost Limit ---
+def test_project_cost_limit_exceeded():
+    # Capital = 6,00,000 -> Project Cost = 60,00,000 (> 50L limit)
+    request = FinancialAnalysisRequest(available_margin_capital=600000.0)
+    response = analyze_finance(request)
+
+    assert response.calculated_project_cost == 6000000.0
+    assert response.applicable_financing_band == FinancingBand.UNSUPPORTED
+    assert response.financial_status == FinancialStatus.PROJECT_RANGE_EXCEEDED
+    assert response.actual_modeled_loan == 0.0
+
+# --- Test 5 — Zero Interest ---
+def test_zero_interest():
+    # Test emi.py directly for zero interest
+    emi = calculate_deterministic_emi(100000.0, 0.0, 10)
+    assert emi == 10000.0
+
+from pydantic import ValidationError
+
+# --- Test 6 — Invalid Capital ---
+def test_invalid_capital():
+    with pytest.raises(ValidationError):
+        FinancialAnalysisRequest(available_margin_capital=0.0)
     
-    # Zero interest
-    assert calculate_emi(900000, 0.0, 84) == round(900000/84, 2)
-    
-    # Invalid inputs
-    assert calculate_emi(0, 8.0, 84) == 0.0
-    assert calculate_emi(900000, 8.0, 0) == 0.0
+    with pytest.raises(ValidationError):
+        FinancialAnalysisRequest(available_margin_capital=-500.0)
 
-def test_repayment_engine():
-    res = calculate_repayment(900000, 8.0, 84)
-    assert res["monthly_emi"] == 14027.59
-    assert res["total_repayment"] == round(14027.59 * 84, 2)
-    assert res["total_interest"] == round((14027.59 * 84) - 900000, 2)
-
-def test_repayment_coverage():
-    assert calculate_repayment_coverage(28000, 14000) == 2.0
-    assert calculate_repayment_coverage(14000, 0) is None
-
-def test_analyze_finance_orchestrator():
-    req = FinancialAnalysisRequest(
-        available_margin=100000,
-        revenue_assumptions=RevenueAssumptions(units_per_month=1000, selling_price=50),
-        cost_assumptions=CostAssumptions(variable_cost_ratio=0.5, fixed_costs_per_month=10000),
-        loan_assumptions=LoanAssumptions(annual_interest_rate=8.0, tenure_months=84)
-    )
+# --- Test 7 — Amortization ---
+def test_amortization_schedule():
+    request = FinancialAnalysisRequest(available_margin_capital=100000.0)
+    response = analyze_finance(request)
     
-    res = analyze_finance(req)
-    assert res.project_cost.value == 1000000.0
-    assert res.loan_amount.value == 900000.0
+    schedule = response.repayment_schedule
+    assert len(schedule) == 84
     
-    # Revenue: 1000 * 50 = 50000
-    assert res.base_scenario.revenue.value == 50000.0
-    # Variable cost: 50000 * 0.5 = 25000
-    assert res.base_scenario.variable_cost.value == 25000.0
-    # Fixed cost = 10000
-    assert res.base_scenario.fixed_cost.value == 10000.0
-    # Profit: 50000 - 25000 - 10000 = 15000
-    assert res.base_scenario.operating_profit.value == 15000.0
+    # Verify balance decreases
+    assert schedule[0].closing_balance > schedule[-1].closing_balance
     
-    assert res.feasibility_indicators.break_even_units.value == round(10000 / (50 - 25), 2)
-    assert res.recommended_financing.monthly_emi == res.monthly_emi.value
+    # Final balance is exactly zero
+    assert schedule[-1].closing_balance == 0.0
+    
+    # Principal + interest = payment
+    for row in schedule:
+        assert round(row.principal_component + row.interest_component, 2) == round(row.payment, 2)
 
-def test_api_endpoint():
-    payload = {
-        "available_margin": 100000,
-        "revenue_assumptions": {"units_per_month": 1000, "selling_price": 50},
-        "cost_assumptions": {"variable_cost_ratio": 0.5, "fixed_costs_per_month": 10000},
-        "loan_assumptions": {"annual_interest_rate": 8.0, "tenure_months": 84}
-    }
-    response = client.post("/api/finance/analyze", json=payload)
-    assert response.status_code == 200
-    data = response.json()
-    assert data["project_cost"]["value"] == 1000000.0
-    assert data["loan_amount"]["value"] == 900000.0
-    assert data["base_scenario"]["operating_profit"]["value"] == 15000.0
+# --- Test 8 — Determinism ---
+def test_determinism():
+    request1 = FinancialAnalysisRequest(available_margin_capital=50000.0)
+    response1 = analyze_finance(request1)
+    
+    request2 = FinancialAnalysisRequest(available_margin_capital=50000.0)
+    response2 = analyze_finance(request2)
+    
+    assert response1.model_dump() == response2.model_dump()

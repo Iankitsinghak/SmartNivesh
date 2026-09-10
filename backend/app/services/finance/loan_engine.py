@@ -1,23 +1,46 @@
-def calculate_project_cost(available_margin: float, margin_percentage: float = 0.10) -> float:
-    """
-    Project Cost = Available Margin / 0.10
-    """
-    if available_margin < 0:
-        raise ValueError("Available margin cannot be negative")
-    if available_margin == 0:
-        return 0.0
-    if margin_percentage <= 0 or margin_percentage > 1:
-        raise ValueError("Invalid margin percentage")
-        
-    return round(available_margin / margin_percentage, 2)
+from app.core.constants import (
+    MICRO_FINANCE_MAX_COST,
+    MICRO_FINANCE_INTEREST,
+    MICRO_FINANCE_TENURE_MONTHS,
+    MICRO_FINANCE_MORATORIUM,
+    MICRO_FINANCE_MAX_LOAN,
+    TERM_LOAN_MAX_COST,
+    TERM_LOAN_INTEREST,
+    TERM_LOAN_TENURE_MONTHS,
+    TERM_LOAN_MORATORIUM,
+    TERM_LOAN_MAX_LOAN,
+)
+from app.core.enums import FinancingBand
 
-def calculate_loan_amount(project_cost: float, margin_percentage: float = 0.10) -> float:
+def derive_project_cost(margin_capital: float) -> float:
     """
-    Calculates the loan portion given a project cost and margin percentage.
+    Project Cost = Available Margin Capital / 10%
     """
-    if project_cost < 0:
-        raise ValueError("Project cost cannot be negative")
-        
-    margin = project_cost * margin_percentage
-    loan_amount = project_cost - margin
-    return round(loan_amount, 2)
+    return round(margin_capital * 10.0, 2)
+
+def derive_loan_requirement(project_cost: float) -> float:
+    """
+    Loan Requirement = Project Cost * 90%
+    """
+    return round(project_cost * 0.90, 2)
+
+def determine_financing_band(project_cost: float) -> tuple[FinancingBand, dict]:
+    """
+    Returns the applicable financing band and its parameters based on project cost.
+    """
+    if project_cost <= MICRO_FINANCE_MAX_COST:
+        return FinancingBand.MICRO_FINANCE, {
+            "interest_rate": MICRO_FINANCE_INTEREST,
+            "tenure_months": MICRO_FINANCE_TENURE_MONTHS,
+            "moratorium_months": MICRO_FINANCE_MORATORIUM,
+            "maximum_agency_loan": MICRO_FINANCE_MAX_LOAN
+        }
+    elif project_cost <= TERM_LOAN_MAX_COST:
+        return FinancingBand.TERM_LOAN, {
+            "interest_rate": TERM_LOAN_INTEREST,
+            "tenure_months": TERM_LOAN_TENURE_MONTHS,
+            "moratorium_months": TERM_LOAN_MORATORIUM,
+            "maximum_agency_loan": TERM_LOAN_MAX_LOAN
+        }
+    else:
+        return FinancingBand.UNSUPPORTED, {}

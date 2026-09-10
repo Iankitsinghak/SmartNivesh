@@ -1,30 +1,42 @@
-from app.services.finance.emi import calculate_emi
+from typing import List, Dict, Any
+from app.schemas.finance import RepaymentScheduleRow
 
-def calculate_repayment(principal: float, annual_interest_rate: float, tenure_months: int):
+def generate_amortization_schedule(principal: float, annual_interest_rate: float, tenure_months: int, monthly_emi: float) -> List[RepaymentScheduleRow]:
     """
-    Calculates total repayment and interest.
+    Generates a deterministic amortization schedule.
+    Assumes standard EMI payments. 
+    Does not factor moratorium deferred interest logic unless specified.
     """
-    if principal < 0 or tenure_months <= 0:
-        raise ValueError("Invalid loan principal or tenure")
-
-    emi = calculate_emi(principal, annual_interest_rate, tenure_months)
-    total_repayment = emi * tenure_months
-    total_interest = total_repayment - principal
+    schedule = []
     
-    # Handle minor float arithmetic issues where interest might be slightly negative due to rounding
-    if total_interest < 0:
-        total_interest = 0.0
-
-    return {
-        "monthly_emi": emi,
-        "total_repayment": round(total_repayment, 2),
-        "total_interest": round(total_interest, 2)
-    }
-
-def calculate_repayment_coverage(monthly_cash_available: float, emi: float):
-    """
-    Calculates Repayment Coverage ratio.
-    """
-    if emi <= 0:
-        return None
-    return round(monthly_cash_available / emi, 2)
+    if principal <= 0 or tenure_months <= 0:
+        return schedule
+        
+    r = (annual_interest_rate / 12.0) / 100.0
+    current_balance = principal
+    
+    for i in range(1, tenure_months + 1):
+        interest_payment = round(current_balance * r, 2)
+        
+        # In the final month, adjust the payment so balance goes exactly to 0
+        if i == tenure_months:
+            payment = current_balance + interest_payment
+            principal_payment = current_balance
+            closing_balance = 0.0
+        else:
+            payment = monthly_emi
+            principal_payment = round(payment - interest_payment, 2)
+            closing_balance = round(current_balance - principal_payment, 2)
+            
+        schedule.append(RepaymentScheduleRow(
+            installment_number=i,
+            opening_balance=current_balance,
+            interest_component=interest_payment,
+            principal_component=principal_payment,
+            payment=payment,
+            closing_balance=closing_balance
+        ))
+        
+        current_balance = closing_balance
+        
+    return schedule
