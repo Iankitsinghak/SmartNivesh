@@ -4,9 +4,9 @@ from app.schemas.common import DataProvenance
 from app.schemas.location import Location
 from app.schemas.business import BusinessCategory
 from app.schemas.market import (
-    MarketAnalysisRequest, MarketAnalysisResponse, MarketOpportunityGap, RadiusAnalysis
+    MarketAnalysisRequest, MarketAnalysisResponse, MarketOpportunityGap, RadiusAnalysis, SWOTAnalysis
 )
-from app.utils.provenance import DataClassification, ConfidenceLevel
+from app.core.enums import DataClassification, ConfidenceLevel
 from app.utils.normalization import get_generic_level, clamp_score
 from app.core.constants import MARKET_GAP_WEIGHTS, OPPORTUNITY_SCORE_WEIGHTS
 from app.services.location.resolver import get_location
@@ -18,6 +18,51 @@ from app.services.market.demand_engine import analyze_demand
 from app.services.market.distribution_engine import analyze_distribution
 from app.services.market.seasonality_engine import analyze_seasonality
 from app.services.market.purchasing_power_engine import analyze_purchasing_power
+from app.services.risk.risk_engine import analyze_risk
+
+def build_swot(category, demand, competition, activity, distribution, seasonality, purchasing_power, market_gap, risk_summary) -> SWOTAnalysis:
+    budget = f"{category.capital_min:,.0f}-{category.capital_max:,.0f} INR"
+    strengths = [
+        f"{category.name} has a defined startup budget of {budget}, keeping the plan grounded in the available capital band.",
+        f"Local demand is {demand.demand_level.lower()} at {demand.demand_score:.0f}/100, with {activity.complementary_business_count} complementary businesses supporting nearby activity."
+    ]
+    weaknesses = []
+    if distribution.distribution_score < 50:
+        weaknesses.append(f"Distribution is {distribution.distribution_level.lower()} at {distribution.distribution_score:.0f}/100, which may increase sourcing effort within this budget.")
+    else:
+        weaknesses.append(f"The {budget} budget leaves limited room for expansion beyond the initial operating footprint.")
+    if seasonality.low_periods:
+        weaknesses.append(f"The category has a seasonal dip during {', '.join(seasonality.low_periods)}.")
+    else:
+        weaknesses.append("The initial budget may constrain stock, staffing, or service breadth during the launch period.")
+
+    opportunities = [
+        f"The market gap is {market_gap.gap_score:.0f}/100, leaving room to capture unmet local demand without exceeding the {budget} band.",
+        f"Commercial activity is {activity.market_activity_level.lower()} at {activity.commercial_activity_score:.0f}/100, creating scope to build partnerships and repeat demand."
+    ]
+    
+    threats = []
+    
+    # Add structured threats from risk analysis if available
+    if risk_summary and risk_summary.get("identified_threat_count", 0) > 0:
+        for threat_desc in risk_summary.get("threats_requiring_attention", []):
+            threats.append(threat_desc)
+    
+    # Fallback: only add generic threats if no specific threats were identified
+    if not threats:
+        if competition.competition_score >= 60:
+            threats.append(f"Competition is {competition.competition_level.lower()} at {competition.competition_score:.0f}/100 across {competition.mapped_competitors} mapped businesses.")
+        else:
+            threats.append("New competitors could reduce the available market gap as the location develops.")
+        
+        if purchasing_power.purchasing_power_score < 50:
+            threats.append(f"Purchasing power is {purchasing_power.purchasing_power_level.lower()} at {purchasing_power.purchasing_power_score:.0f}/100, putting pressure on pricing and payback.")
+        elif seasonality.low_periods:
+            threats.append(f"Demand may soften during {', '.join(seasonality.low_periods)}, affecting cash flow against the startup budget.")
+        else:
+            threats.append("Supplier costs and local price competition could compress margins during early operations.")
+
+    return SWOTAnalysis(strengths=strengths, weaknesses=weaknesses, opportunities=opportunities, threats=threats)
 
 def get_business_category(category_id: str) -> Optional[BusinessCategory]:
     try:
@@ -101,7 +146,26 @@ def analyze_market(request: MarketAnalysisRequest) -> MarketAnalysisResponse:
         competition_deduction=round(comp_deduction, 2)
     )
 
-    # 11. Final Overall Market Score
+    # 11. Risk Analysis (with empty location as seed; no operational evidence)
+    risk_result = analyze_risk(location, request.category_id, request.radius_km, operational_evidence=None)
+    threat_summary = {
+        "identified_threat_count": risk_result.summary.get("identified_threat_count", 0),
+        "low_probability_threat_count": risk_result.summary.get("low_probability_threat_count", 0),
+        "unknown_threat_count": risk_result.summary.get("unknown_threat_count", 0),
+        "overall_status": risk_result.overall_status,
+        "data_completeness": risk_result.summary.get("data_completeness", "INSUFFICIENT"),
+        "threats_requiring_attention": [
+            t.evidence_summary for t in risk_result.threats
+            if t.status == "identified" and t.severity_level in ["critical", "high"]
+        ],
+    }
+
+    swot = build_swot(
+        category, demand_result, competition_result, activity_result,
+        distribution_result, seasonality_result, purchasing_power_result, market_gap, threat_summary
+    )
+
+    # 12. Final Overall Market Score
     # We only have market-side data right now (no capital, skills, risk etc)
     # So we'll calculate a pure market score using proportional market weights.
     overall_score = clamp_score(
@@ -125,9 +189,11 @@ def analyze_market(request: MarketAnalysisRequest) -> MarketAnalysisResponse:
         seasonality=seasonality_result,
         purchasing_power=purchasing_power_result,
         market_gap=market_gap,
+        swot=swot,
         customer_potential=get_generic_level(demographic_result["demographic_fit"]),
         market_opportunity_level=get_generic_level(overall_score),
         overall_score=round(overall_score, 2),
         confidence=ConfidenceLevel.MEDIUM,
-        data_provenance=provenance
+        data_provenance=provenance,
+        threat_summary=threat_summary,
     )

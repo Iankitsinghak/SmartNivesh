@@ -2,7 +2,7 @@ import json
 from typing import List
 from app.schemas.business import Business, BusinessCategory
 from app.utils.geo import calculate_distance, distance_decay
-from app.utils.provenance import ConfidenceLevel
+from app.core.enums import ConfidenceLevel
 from app.schemas.market import CompetitionResult
 from app.utils.normalization import get_generic_level, clamp_score
 

@@ -1,6 +1,6 @@
 from app.schemas.business import BusinessCategory
 from app.schemas.market import DistributionResult
-from app.utils.provenance import ConfidenceLevel
+from app.core.enums import ConfidenceLevel
 
 def analyze_distribution(category: BusinessCategory) -> DistributionResult:
     """

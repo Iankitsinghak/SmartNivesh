@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 class DemographicSegment(BaseModel):
     segment: str
@@ -18,6 +18,9 @@ class BusinessCategory(BaseModel):
     supplier_categories: List[str] = []
     seasonality_profile: dict = {}
     distribution_profile: dict = {}
+    # Live OpenStreetMap tags that identify businesses comparable to this category.
+    # This is category configuration, not a source of business records.
+    osm_competitor_tags: List[Dict[str, str]] = []
 
 class Business(BaseModel):
     business_id: str

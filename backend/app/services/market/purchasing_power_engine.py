@@ -1,5 +1,5 @@
 from app.schemas.market import PurchasingPowerResult
-from app.utils.provenance import ConfidenceLevel
+from app.core.enums import ConfidenceLevel
 
 def analyze_purchasing_power(lat: float, lon: float) -> PurchasingPowerResult:
     """

@@ -2,7 +2,7 @@ import json
 from typing import Optional, Dict, Any
 from app.schemas.demographic import Demographics
 from app.schemas.business import BusinessCategory
-from app.utils.provenance import ConfidenceLevel
+from app.core.enums import ConfidenceLevel
 from app.utils.normalization import clamp_score
 from app.core.database import SessionLocal
 from app.models.demographic import DemographicRecord

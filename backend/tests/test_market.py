@@ -48,6 +48,21 @@ def test_overall_market_analysis():
     
     # Since Demographics seeded data matches working population, score > 0
     assert response.demand.signals["demographic_fit"] > 0
+    assert response.swot.strengths
+    assert "100,000" in response.swot.strengths[0]
+    assert response.swot.weaknesses
+    assert response.swot.opportunities
+    assert response.swot.threats
+    
+    # Check threat summary is present and structured
+    assert response.threat_summary is not None
+    assert "identified_threat_count" in response.threat_summary
+    assert "low_probability_threat_count" in response.threat_summary
+    assert "unknown_threat_count" in response.threat_summary
+    assert "data_completeness" in response.threat_summary
+    
+    # Verify backward compatibility: SWOT threats remain non-empty
+    assert len(response.swot.threats) > 0
     
 def test_unknown_location_fails_gracefully():
     request = MarketAnalysisRequest(
@@ -57,3 +72,4 @@ def test_unknown_location_fails_gracefully():
     
     with pytest.raises(ValueError, match="Location not found"):
         analyze_market(request)
+

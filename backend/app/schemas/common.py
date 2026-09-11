@@ -54,7 +54,7 @@ class SufficiencyResult:
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
-from app.utils.provenance import DataClassification, ConfidenceLevel
+from app.core.enums import DataClassification, ConfidenceLevel
 
 class DataProvenance(BaseModel):
     source_id: str

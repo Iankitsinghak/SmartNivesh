@@ -1,5 +1,5 @@
 from app.schemas.market import DemandResult, BusinessActivityResult, POIResult
-from app.utils.provenance import ConfidenceLevel
+from app.core.enums import ConfidenceLevel
 from app.utils.normalization import get_generic_level, clamp_score
 
 def analyze_demand(

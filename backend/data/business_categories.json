@@ -14,7 +14,8 @@
     "complementary_categories": ["CAT-002"],
     "supplier_categories": [],
     "seasonality_profile": {"peak": ["SUMMER", "FESTIVAL"], "low": ["MONSOON"]},
-    "distribution_profile": {"requires_wholesale": true}
+    "distribution_profile": {"requires_wholesale": true},
+    "osm_competitor_tags": [{"amenity": "restaurant"}]
   },
   {
     "category_id": "CAT-002",
@@ -29,7 +30,8 @@
     "complementary_categories": ["CAT-001"],
     "supplier_categories": [],
     "seasonality_profile": {"peak": ["FESTIVAL", "WINTER"], "low": ["SUMMER"]},
-    "distribution_profile": {"requires_wholesale": false}
+    "distribution_profile": {"requires_wholesale": false},
+    "osm_competitor_tags": [{"tourism": "hotel"}]
   },
   {
     "category_id": "CAT-003",
@@ -46,6 +48,103 @@
     "complementary_categories": ["CAT-004"],
     "supplier_categories": [],
     "seasonality_profile": {"peak": ["FESTIVAL", "WEDDING"], "low": []},
-    "distribution_profile": {"requires_wholesale": true}
+    "distribution_profile": {"requires_wholesale": true},
+    "osm_competitor_tags": [{"shop": "cosmetics"}]
+  },
+  {
+    "category_id": "CAT-004",
+    "name": "Kirana / General Store",
+    "description": "Everyday essentials and household goods retail.",
+    "osm_competitor_tags": [{"shop": "convenience"}]
+  },
+  {
+    "category_id": "CAT-005",
+    "name": "Tea & Snack Stall",
+    "description": "Tea, snacks, and quick-service food outlet.",
+    "osm_competitor_tags": [{"amenity": "fast_food"}, {"amenity": "cafe"}]
+  },
+  {
+    "category_id": "CAT-006",
+    "name": "Bakery",
+    "description": "Bread, baked goods, and confectionery retail.",
+    "osm_competitor_tags": [{"shop": "bakery"}]
+  },
+  {
+    "category_id": "CAT-007",
+    "name": "Tailoring & Boutique",
+    "description": "Garment stitching, alteration, and boutique services.",
+    "osm_competitor_tags": [{"shop": "tailor"}]
+  },
+  {
+    "category_id": "CAT-008",
+    "name": "Beauty Salon",
+    "description": "Personal-care and beauty services.",
+    "osm_competitor_tags": [{"shop": "beauty"}, {"shop": "hairdresser"}]
+  },
+  {
+    "category_id": "CAT-009",
+    "name": "Mobile Phone Shop & Repair",
+    "description": "Mobile sales, accessories, and electronic repair.",
+    "osm_competitor_tags": [{"shop": "mobile_phone"}, {"craft": "electronics_repair"}]
+  },
+  {
+    "category_id": "CAT-010",
+    "name": "Pharmacy / Medical Store",
+    "description": "Retail pharmacy and essential health products.",
+    "osm_competitor_tags": [{"amenity": "pharmacy"}]
+  },
+  {
+    "category_id": "CAT-011",
+    "name": "Fruit & Vegetable Shop",
+    "description": "Fresh produce retail.",
+    "osm_competitor_tags": [{"shop": "greengrocer"}]
+  },
+  {
+    "category_id": "CAT-012",
+    "name": "Dairy / Milk Shop",
+    "description": "Milk and dairy-product retail.",
+    "osm_competitor_tags": [{"shop": "dairy"}]
+  },
+  {
+    "category_id": "CAT-013",
+    "name": "Stationery & Photocopy",
+    "description": "Stationery, printing, and photocopy services.",
+    "osm_competitor_tags": [{"shop": "stationery"}, {"shop": "copyshop"}]
+  },
+  {
+    "category_id": "CAT-014",
+    "name": "Hardware & Electrical Store",
+    "description": "Hardware, electrical fittings, and small tools retail.",
+    "osm_competitor_tags": [{"shop": "hardware"}, {"shop": "electrical"}]
+  },
+  {
+    "category_id": "CAT-015",
+    "name": "Furniture & Carpentry",
+    "description": "Furniture retail and carpentry work.",
+    "osm_competitor_tags": [{"shop": "furniture"}, {"craft": "carpenter"}]
+  },
+  {
+    "category_id": "CAT-016",
+    "name": "Welding & Fabrication",
+    "description": "Metal welding and fabrication services.",
+    "osm_competitor_tags": [{"craft": "welder"}]
+  },
+  {
+    "category_id": "CAT-017",
+    "name": "Laundry & Ironing",
+    "description": "Laundry, ironing, and garment-care services.",
+    "osm_competitor_tags": [{"shop": "laundry"}]
+  },
+  {
+    "category_id": "CAT-018",
+    "name": "Bicycle Sales & Repair",
+    "description": "Bicycle retail, parts, and basic repair services.",
+    "osm_competitor_tags": [{"shop": "bicycle"}]
+  },
+  {
+    "category_id": "CAT-019",
+    "name": "Agricultural Input Store",
+    "description": "Seeds, fertiliser, tools, and agricultural supplies retail.",
+    "osm_competitor_tags": [{"shop": "agrarian"}]
   }
 ]

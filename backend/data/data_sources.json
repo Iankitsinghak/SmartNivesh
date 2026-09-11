@@ -13,5 +13,128 @@
     ],
     "update_frequency": "Continuous, subject to contributor updates",
     "last_verified": "2026-09-08"
+  },
+  {
+    "source_id": "OSM_OVERPASS_LIVE",
+    "provider_name": "OpenStreetMap contributors",
+    "dataset_name": "OpenStreetMap live feature queries via Overpass API",
+    "source_url": "https://overpass-api.de/",
+    "access_method": "Public Overpass API query",
+    "publication_date": "2004-08-09",
+    "geographic_coverage": "Mapped administrative boundaries and commercial features in the requested block",
+    "limitations": [
+      "Mapped features are not a complete census of businesses.",
+      "Administrative block availability and tagging vary by location.",
+      "Public API capacity and usage policies apply."
+    ],
+    "update_frequency": "Continuously updated by contributors",
+    "last_verified": "2026-09-10"
+  },
+  {
+    "source_id": "007f2c63-cdb1-4c91-82ef-61716f0b0e76",
+    "provider_name": "Registrar General and Census Commissioner, India",
+    "dataset_name": "Village Amenities, Census 2011",
+    "source_url": "https://www.data.gov.in/catalog/village-amenities-census-2011",
+    "access_method": "Exact district resource page on data.gov.in and directly hosted Census CSV",
+    "publication_date": "2016-03-31",
+    "geographic_coverage": "Rural villages in 631 district resources; aggregated by CD Block Name",
+    "limitations": [
+      "The catalog exposes no consumable nationwide row API and requires district-resource resolution.",
+      "The source is Census 2011 and excludes statutory-town residents from the rural village aggregate.",
+      "CD-block names and boundaries may not match current OpenStreetMap administrative boundaries."
+    ],
+    "update_frequency": "Decadal source",
+    "last_verified": "2026-09-11"
+  },
+  {
+    "source_id": "89bf5d50-cecf-4219-84d9-12b062c301e2",
+    "provider_name": "Ministry of Statistics and Programme Implementation",
+    "dataset_name": "HCES 2023-24 State/UT Average Monthly Per Capita Consumption Expenditure",
+    "source_url": "https://www.data.gov.in/resource/stateut-wise-details-average-monthly-capita-consumption-expenditure-mpce-rural-and-urban",
+    "access_method": "Reviewed official table versioned in the application; cross-checked with the MoSPI HCES fact sheet",
+    "publication_date": "2025-07-17",
+    "geographic_coverage": "India, State/UT, rural and urban",
+    "limitations": [
+      "data.gov.in marks Sourced Webservices/APIs as NA for this resource.",
+      "State rural MPCE is a consumption-expenditure proxy, not a direct purchasing-power index or block estimate.",
+      "The reference period is 2023-24 and does not measure current local willingness to pay."
+    ],
+    "update_frequency": "As published with HCES releases",
+    "last_verified": "2026-09-11"
+  },
+  {
+    "source_id": "NSFDC_SCHEME_RULES",
+    "provider_name": "National Scheduled Castes Finance and Development Corporation",
+    "dataset_name": "NSFDC credit-scheme FAQs",
+    "source_url": "https://nsfdc.nic.in/faqs",
+    "access_method": "Official Government of India public publication; manually curated rule review",
+    "publication_date": "2026-09-10",
+    "geographic_coverage": "India; applications are routed through authorized channelizing agencies",
+    "limitations": [
+      "Published terms apply only after NSFDC target-group, income, activity and agency verification.",
+      "The publication is not a loan-calculator API or a sanction decision."
+    ],
+    "update_frequency": "As updated by NSFDC",
+    "last_verified": "2026-09-10"
+  },
+  {
+    "source_id": "DFS_PMMY_RULES",
+    "provider_name": "Department of Financial Services, Ministry of Finance",
+    "dataset_name": "Pradhan Mantri MUDRA Yojana categories",
+    "source_url": "https://financialservices.gov.in/pradhan-mantri-mudra-yojana-pmmy",
+    "access_method": "Official Government of India public publication; manually curated rule review",
+    "publication_date": "2015-04-08",
+    "geographic_coverage": "India",
+    "limitations": [
+      "The source publishes category limits but not one borrower interest rate or tenure across participating lenders.",
+      "A category match does not constitute lender approval."
+    ],
+    "update_frequency": "As updated by the Department of Financial Services",
+    "last_verified": "2026-09-10"
+  },
+  {
+    "source_id": "KVIC_PMEGP_RULES",
+    "provider_name": "Khadi and Village Industries Commission",
+    "dataset_name": "Revised PMEGP Scheme Guidelines",
+    "source_url": "https://www.kviconline.gov.in/pmegpeportal/dashboard/notification/Revised_PMEGP_Scheme_Guidelines_07122023_compressed.pdf",
+    "access_method": "Official Government of India public publication; manually curated rule review",
+    "publication_date": "2023-12-07",
+    "geographic_coverage": "India",
+    "limitations": [
+      "Subsidy requires the applicable project classification, area and beneficiary-group rules, then implementing-agency and bank verification.",
+      "Margin money is not represented as an upfront cash payment."
+    ],
+    "update_frequency": "As updated by KVIC",
+    "last_verified": "2026-09-10"
+  },
+  {
+    "source_id": "MOFPI_PMFME_RULES",
+    "provider_name": "Ministry of Food Processing Industries",
+    "dataset_name": "PM Formalisation of Micro Food Processing Enterprises scheme portal",
+    "source_url": "https://pmfme.mofpi.gov.in/pmfme/",
+    "access_method": "Official Government of India public publication; manually curated rule review",
+    "publication_date": "2020-06-29",
+    "geographic_coverage": "India",
+    "limitations": [
+      "Current component availability, ODOP/activity eligibility, food-safety requirements and bank terms must be confirmed before application.",
+      "The credit-linked subsidy does not supply a universal loan rate or EMI."
+    ],
+    "update_frequency": "As updated by MoFPI",
+    "last_verified": "2026-09-10"
+  },
+  {
+    "source_id": "PMVISHWAKARMA_RULES",
+    "provider_name": "Ministry of Micro, Small and Medium Enterprises",
+    "dataset_name": "PM Vishwakarma scheme guidance",
+    "source_url": "https://pmvishwakarma.gov.in/",
+    "access_method": "Official Government of India public publication; manually curated rule review",
+    "publication_date": "2023-09-17",
+    "geographic_coverage": "India",
+    "limitations": [
+      "Published credit tranches apply only to verified eligible traditional trades and programme conditions.",
+      "The service does not verify training, standard-loan performance or trade eligibility."
+    ],
+    "update_frequency": "As updated by MSME",
+    "last_verified": "2026-09-10"
   }
 ]

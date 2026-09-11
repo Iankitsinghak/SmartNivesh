@@ -1,7 +1,8 @@
-# Removed top level import of app.schemas.common
+"""Data source and evidence validation utilities."""
+
 
 def validate_source(source) -> list[str]:
-    from app.schemas.common import DataSource
+    """Validate DataSource object has required fields."""
     missing: list[str] = []
     required = {
         "source_id": source.source_id,
@@ -18,7 +19,7 @@ def validate_source(source) -> list[str]:
 
 
 def validate_evidence(evidence) -> list[str]:
-    from app.schemas.common import Evidence
+    """Validate Evidence object has required fields."""
     missing = validate_source(evidence.source)
     if evidence.value is None:
         missing.append("value")
@@ -29,26 +30,3 @@ def validate_evidence(evidence) -> list[str]:
     if evidence.dataset_date is None:
         missing.append("dataset_date")
     return missing
-from enum import Enum
-
-class DataClassification(str, Enum):
-    VERIFIED = "VERIFIED"
-    CALCULATED = "CALCULATED"
-    ESTIMATED = "ESTIMATED"
-    SEEDED_DEMO = "SEEDED_DEMO"
-    ASSUMPTION = "ASSUMPTION"
-    AI_INTERPRETATION = "AI_INTERPRETATION"
-
-class ConfidenceLevel(str, Enum):
-    HIGH = "HIGH"
-    MEDIUM = "MEDIUM"
-    LOW = "LOW"
-    UNKNOWN = "UNKNOWN"
-
-class DemandLevel(str, Enum):
-    VERY_HIGH = "VERY_HIGH"
-    HIGH = "HIGH"
-    MEDIUM = "MEDIUM"
-    LOW = "LOW"
-    VERY_LOW = "VERY_LOW"
-    UNKNOWN = "UNKNOWN"

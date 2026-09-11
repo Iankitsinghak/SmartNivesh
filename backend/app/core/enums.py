@@ -30,31 +30,45 @@ class EvidenceSufficiency(str, Enum):
     INSUFFICIENT = "insufficient"
 
 
-class DataStatus(str, Enum):
-    CALCULATED = "CALCULATED"
-    ESTIMATED = "ESTIMATED"
-    ASSUMPTION = "ASSUMPTION"
-    UNKNOWN = "UNKNOWN"
+class ThreatType(str, Enum):
+    SEASONAL_DEMAND = "seasonal_demand"
+    SUPPLY_CHAIN_BOTTLENECK = "supply_chain_bottleneck"
+    BUYER_CONCENTRATION = "buyer_concentration"
 
-class FinancialStatus(str, Enum):
-    SUPPORTED = "SUPPORTED"
-    LOAN_CAP_EXCEEDED = "LOAN_CAP_EXCEEDED"
-    PROJECT_RANGE_EXCEEDED = "PROJECT_RANGE_EXCEEDED"
-    INVALID_INPUT = "INVALID_INPUT"
-    INSUFFICIENT_INFORMATION = "INSUFFICIENT_INFORMATION"
 
-class FinancingBand(str, Enum):
-    MICRO_FINANCE = "MICRO_FINANCE"
-    TERM_LOAN = "TERM_LOAN"
-    UNSUPPORTED = "UNSUPPORTED"
+class ThreatStatus(str, Enum):
+    IDENTIFIED = "identified"
+    LOW = "low"
+    UNKNOWN = "unknown"
+
+
+class ThreatSeverity(str, Enum):
+    CRITICAL = "critical"
+    HIGH = "high"
+    MODERATE = "moderate"
+    LOW = "low"
+
 
 class DataClassification(str, Enum):
-    ASSUMPTION = "ASSUMPTION"
-    CALCULATED = "CALCULATED"
     VERIFIED = "VERIFIED"
+    CALCULATED = "CALCULATED"
+    ESTIMATED = "ESTIMATED"
+    SEEDED_DEMO = "SEEDED_DEMO"
+    ASSUMPTION = "ASSUMPTION"
+    AI_INTERPRETATION = "AI_INTERPRETATION"
 
-class EligibilityStatus(str, Enum):
-    PENDING = "PENDING"
-    INSUFFICIENT_INFORMATION = "INSUFFICIENT_INFORMATION"
-    ELIGIBLE = "ELIGIBLE"
-    NOT_ELIGIBLE = "NOT_ELIGIBLE"
+
+class ConfidenceLevel(str, Enum):
+    HIGH = "HIGH"
+    MEDIUM = "MEDIUM"
+    LOW = "LOW"
+    UNKNOWN = "UNKNOWN"
+
+
+class DemandLevel(str, Enum):
+    VERY_HIGH = "VERY_HIGH"
+    HIGH = "HIGH"
+    MEDIUM = "MEDIUM"
+    LOW = "LOW"
+    VERY_LOW = "VERY_LOW"
+    UNKNOWN = "UNKNOWN"
