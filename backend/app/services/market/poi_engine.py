@@ -3,7 +3,7 @@ from typing import List
 from app.schemas.place import Place
 from app.schemas.business import BusinessCategory
 from app.utils.geo import calculate_distance
-from app.utils.provenance import ConfidenceLevel
+from app.core.enums import ConfidenceLevel
 from app.schemas.market import POIResult
 
 from app.core.database import SessionLocal

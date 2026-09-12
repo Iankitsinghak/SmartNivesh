@@ -126,15 +126,18 @@ class MarketAnalysisResponse(BaseModel):
 
 
 class CompetitorMappingRequest(BaseModel):
-    """Input for a live, block-scoped competitor lookup."""
+    """Input for a live competitor lookup centred on the selected location scope."""
 
     latitude: float = Field(ge=-90, le=90)
     longitude: float = Field(ge=-180, le=180)
     state_name: str = Field(min_length=2, max_length=160)
     district_name: str = Field(min_length=2, max_length=160)
     district_osm_id: Optional[str] = Field(default=None, max_length=80)
-    block_name: str = Field(min_length=2, max_length=160)
+    block_name: Optional[str] = Field(default=None, min_length=2, max_length=160)
+    village_name: Optional[str] = Field(default=None, min_length=2, max_length=160)
+    analysis_scope: Literal["DISTRICT", "SUBDISTRICT", "VILLAGE"] = "SUBDISTRICT"
     category_id: str
+    radius_km: int = Field(default=10, ge=2, le=10)
 
 
 class AdministrativeLocationRequest(BaseModel):
@@ -153,13 +156,34 @@ class AdministrativeLocationResponse(BaseModel):
     data_provenance: List[DataProvenance] = []
 
 
+class LocalDemographicsRequest(BaseModel):
+    state_name: str = Field(min_length=2, max_length=160)
+    district_name: str = Field(min_length=2, max_length=160)
+    subdistrict_name: str = Field(min_length=2, max_length=160)
+
+
+class LocalDemographicsResponse(BaseModel):
+    status: Literal["AVAILABLE", "INSUFFICIENT"]
+    geographic_scope: str = "sub-district"
+    total_population: Optional[int] = None
+    households: Optional[int] = None
+    working_population: Optional[int] = None
+    population_0_6: Optional[int] = None
+    census_year: str = "2011"
+    limitations: List[str] = []
+    data_provenance: List[DataProvenance] = []
+
+
 class MappedCompetitor(BaseModel):
     osm_id: str
     osm_type: str
+    provider: Literal["OPENSTREETMAP", "GOOGLE_PLACES", "GEOAPIFY"] = "OPENSTREETMAP"
+    source_feature_id: Optional[str] = None
     name: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     tags: Dict[str, str] = {}
+    distance_km: Optional[float] = None
 
 
 class DemographicMappingContext(BaseModel):
@@ -175,12 +199,33 @@ class EconomicMappingContext(BaseModel):
     competitors_per_100_commercial_features: Optional[float] = None
 
 
+class RadiusSupplyContext(BaseModel):
+    """Observed mapped competitor counts around the selected map point.
+
+    These are supply counts, not population estimates or demand measurements.
+    """
+
+    within_2km: int = 0
+    within_5km: int = 0
+    within_10km: int = 0
+
+
+class AccessibilityContext(BaseModel):
+    status: Literal["AVAILABLE", "INSUFFICIENT"]
+    nearest_competitor_distance_km: Optional[float] = None
+    nearest_competitor_drive_distance_km: Optional[float] = None
+    nearest_competitor_drive_time_minutes: Optional[float] = None
+    provider: Optional[str] = None
+    limitations: List[str] = []
+
+
 class CompetitorMappingResponse(BaseModel):
     """A live-data result. No demo records or synthetic counts are used."""
 
     status: Literal["AVAILABLE", "INSUFFICIENT"]
     block_id: Optional[str] = None
     block_name: str
+    analysis_scope: Literal["DISTRICT", "SUBDISTRICT", "VILLAGE"] = "SUBDISTRICT"
     block_admin_level: Optional[str] = None
     category_id: str
     mapped_competitor_count: Optional[int] = None
@@ -189,6 +234,8 @@ class CompetitorMappingResponse(BaseModel):
     competitors_per_1000_target_customers: Optional[float] = None
     demographics: Optional[DemographicMappingContext] = None
     economic_context: Optional[EconomicMappingContext] = None
+    radius_supply: Optional[RadiusSupplyContext] = None
+    accessibility: Optional[AccessibilityContext] = None
     confidence: ConfidenceLevel
     methodology: List[str] = []
     limitations: List[str] = []

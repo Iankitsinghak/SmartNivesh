@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from typing import Optional
 from app.schemas.common import DataProvenance
 from app.schemas.location import Location
@@ -66,7 +67,7 @@ def build_swot(category, demand, competition, activity, distribution, seasonalit
 
 def get_business_category(category_id: str) -> Optional[BusinessCategory]:
     try:
-        with open("data/business_categories.json", "r") as f:
+        with (Path(__file__).resolve().parents[3] / "data" / "business_categories.json").open("r") as f:
             cats = json.load(f)
             for c in cats:
                 if c["category_id"] == category_id:

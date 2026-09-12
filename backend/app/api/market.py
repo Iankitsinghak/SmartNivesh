@@ -7,6 +7,8 @@ from app.schemas.market import (
     CompetitorMappingResponse,
     AdministrativeLocationRequest,
     AdministrativeLocationResponse,
+    LocalDemographicsRequest,
+    LocalDemographicsResponse,
     IndiaAdministrativeOptionsResponse,
     MarketAnalysisRequest,
     MarketAnalysisResponse,
@@ -20,6 +22,7 @@ from app.services.market.live_competitor_mapping import (
     resolve_administrative_location,
 )
 from app.services.market.product_market_value import analyze_product_market_value
+from app.services.demographics.census_2011 import local_demographics
 
 router = APIRouter(prefix="/api/market", tags=["Market Intelligence"])
 
@@ -35,6 +38,14 @@ async def competitor_lookup(request: CompetitorMappingRequest):
 async def resolve_administrative_location_endpoint(request: AdministrativeLocationRequest):
     return await asyncio.to_thread(
         resolve_administrative_location, request.state_name, request.district_name, request.block_name
+    )
+
+
+@router.post('/local-demographics', response_model=LocalDemographicsResponse)
+async def local_demographics_endpoint(request: LocalDemographicsRequest):
+    """Read the supplied Census 2011 PCA data without a public network request."""
+    return await asyncio.to_thread(
+        local_demographics, request.state_name, request.district_name, request.subdistrict_name
     )
 
 

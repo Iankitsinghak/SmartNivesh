@@ -3,3 +3,8 @@ pydantic
 pytest
 uvicorn
 python-dotenv
+certifi
+osmium>=4.0,<5.0
+sqlalchemy
+httpx
+openpyxl

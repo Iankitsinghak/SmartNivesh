@@ -1,7 +1,7 @@
-import type { AdministrativeLocation, CompetitorMapping, FinancialRoadmap, FinancialRoadmapRequest, HealthState, IndiaAdministrativeOptions, MarketAnalysis, ProductMarketValue } from './types'
+import type { AdministrativeLocation, AssessmentAssistantResponse, CompetitorMapping, FinancialIntelligence, FinancialRoadmap, FinancialRoadmapRequest, HealthState, IndiaAdministrativeOptions, LocalDemographics, MapplsAutosuggestResponse, MarketAnalysis, ProductMarketValue } from './types'
 import { INDIA_STATES_RESPONSE } from './indiaStates'
 
-const ADMINISTRATIVE_CACHE_VERSION = 'v2'
+const ADMINISTRATIVE_CACHE_VERSION = 'v3-census-2011'
 const administrativeCacheTtlMs = {
   state: 7 * 24 * 60 * 60 * 1000,
   district: 24 * 60 * 60 * 1000,
@@ -76,7 +76,7 @@ export async function analyzeMarket(payload: { location_id: string; category_id:
   return response.json()
 }
 
-export async function mapLiveCompetitors(payload: { latitude: number; longitude: number; state_name: string; district_name: string; district_osm_id?: string; block_name: string; category_id: string }): Promise<CompetitorMapping> {
+export async function mapLiveCompetitors(payload: { latitude: number; longitude: number; state_name: string; district_name: string; district_osm_id?: string; block_name?: string; village_name?: string; analysis_scope: 'DISTRICT' | 'SUBDISTRICT' | 'VILLAGE'; category_id: string; radius_km: number }): Promise<CompetitorMapping> {
   return pollLookup<CompetitorMapping>('/api/market/competitor-lookup', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -89,6 +89,33 @@ export async function resolveAdministrativeLocation(payload: { state_name: strin
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
   }, 30_000)
   if (!response.ok) throw new Error('The live map boundary service is temporarily unavailable.')
+  return response.json()
+}
+
+export async function getLocalDemographics(payload: { state_name: string; district_name: string; subdistrict_name: string }): Promise<LocalDemographics> {
+  const response = await fetchWithTimeout('/api/market/local-demographics', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+  }, 5_000)
+  if (!response.ok) throw new Error('The local Census demographic service could not be reached.')
+  return response.json()
+}
+
+export async function getMapplsAutosuggest(query: string, pod?: 'STATE' | 'DIST' | 'SDIST' | 'VLG'): Promise<MapplsAutosuggestResponse> {
+  const response = await fetchWithTimeout('/api/location/autosuggest', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query, pod }),
+  }, 10_000)
+  if (!response.ok) throw new Error('Location assistance is temporarily unavailable.')
+  return response.json()
+}
+
+export async function askAssessmentAssistant(payload: { question: string; language: 'en' | 'hi'; assessment_context: Record<string, unknown> }): Promise<AssessmentAssistantResponse> {
+  const response = await fetchWithTimeout('/api/assistant/ask', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+  }, 30_000)
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.detail || 'The explanation service is temporarily unavailable.')
+  }
   return response.json()
 }
 
@@ -144,6 +171,22 @@ export async function getFinancialRoadmap(payload: FinancialRoadmapRequest): Pro
   if (!response.ok) {
     const error = await response.json().catch(() => ({}))
     throw new Error(error.detail || `Financial roadmap failed (${response.status})`)
+  }
+  return response.json()
+}
+
+export async function getFinancialIntelligence(payload: {
+  available_margin_capital: number
+  revenue?: { monthly_revenue: number }
+  costs?: { monthly_fixed_cost: number; monthly_variable_cost: number }
+  working_capital?: { operating_buffer_months: number }
+}): Promise<FinancialIntelligence> {
+  const response = await fetchWithTimeout('/api/finance/analyze', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+  })
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.detail || `Financial intelligence failed (${response.status})`)
   }
   return response.json()
 }

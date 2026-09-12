@@ -146,5 +146,23 @@
     "name": "Agricultural Input Store",
     "description": "Seeds, fertiliser, tools, and agricultural supplies retail.",
     "osm_competitor_tags": [{"shop": "agrarian"}]
+  },
+  {
+    "category_id": "CAT-020",
+    "name": "Textiles & Garment Store",
+    "description": "Textiles, ready-made garments, and fabric retail.",
+    "osm_competitor_tags": [{"shop": "clothes"}, {"shop": "fabric"}]
+  },
+  {
+    "category_id": "CAT-021",
+    "name": "Footwear Store & Repair",
+    "description": "Footwear sales and shoe-repair services.",
+    "osm_competitor_tags": [{"shop": "shoes"}, {"craft": "shoemaker"}]
+  },
+  {
+    "category_id": "CAT-022",
+    "name": "Computer & Digital Service Centre",
+    "description": "Computer sales, printing, and digital public services.",
+    "osm_competitor_tags": [{"shop": "computer"}, {"shop": "copyshop"}]
   }
 ]

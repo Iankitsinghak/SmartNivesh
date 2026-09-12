@@ -2,6 +2,12 @@ from app.schemas.market import CompetitorMappingRequest
 from app.services.market import live_competitor_mapping as mapping
 
 
+def setup_function(_function):
+    """Keep legacy unit tests hermetic; multi-provider tests opt in explicitly."""
+    import os
+    os.environ["VYAPARSATHI_MULTISOURCE_COMPETITORS_ENABLED"] = "false"
+
+
 def _request() -> CompetitorMappingRequest:
     return CompetitorMappingRequest(
         latitude=28.6139,

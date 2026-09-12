@@ -72,3 +72,21 @@ class DemandLevel(str, Enum):
     LOW = "LOW"
     VERY_LOW = "VERY_LOW"
     UNKNOWN = "UNKNOWN"
+
+
+class FinancingBand(str, Enum):
+    MICRO_FINANCE = "MICRO_FINANCE"
+    TERM_LOAN = "TERM_LOAN"
+    UNSUPPORTED = "UNSUPPORTED"
+
+
+class FinancialStatus(str, Enum):
+    INVALID_INPUT = "INVALID_INPUT"
+    SUPPORTED = "SUPPORTED"
+    LOAN_CAP_EXCEEDED = "LOAN_CAP_EXCEEDED"
+    PROJECT_RANGE_EXCEEDED = "PROJECT_RANGE_EXCEEDED"
+
+
+class EligibilityStatus(str, Enum):
+    PENDING = "PENDING"
+    INSUFFICIENT_INFORMATION = "INSUFFICIENT_INFORMATION"

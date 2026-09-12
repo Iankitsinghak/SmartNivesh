@@ -33,12 +33,23 @@ from app.schemas.common import DataProvenance
 from app.schemas.market import (
     CompetitorMappingRequest,
     CompetitorMappingResponse,
+    AccessibilityContext,
     DemographicMappingContext,
     EconomicMappingContext,
+    RadiusSupplyContext,
     IndiaAdministrativeOption,
     IndiaAdministrativeOptionsResponse,
     MappedCompetitor,
 )
+from app.utils.geo import haversine_km
+from app.services.location.external_geo import (
+    ExternalGeoUnavailable,
+    geocode_administrative_area,
+    geoapify_places_for_category,
+    google_places_for_category,
+    route_summary,
+)
+from app.services.market.osm_snapshot import nearby_points, available as osm_snapshot_available
 
 
 DEFAULT_OVERPASS_URL = "https://overpass-api.de/api/interpreter"
@@ -198,6 +209,11 @@ def _fetch_public_bytes(url: str, *, accept: str, maximum_bytes: int) -> bytes:
     if len(content) > maximum_bytes:
         raise LiveDataUnavailable("The official Census district file exceeds the safety limit.")
     return content
+
+
+# Tests can replace this HTTP boundary to verify the legacy district-resource
+# parser. In production, the local national PCA index is preferred.
+_ORIGINAL_FETCH_PUBLIC_BYTES = _fetch_public_bytes
 
 
 def _local_census_cache_file(file_url: str) -> Optional[Path]:
@@ -533,6 +549,21 @@ class PublicDemographicsApi:
         return parsed if parsed is not None else 0
 
     def fetch(self, request: CompetitorMappingRequest) -> DemographicSnapshot:
+        # The project’s imported national Census PCA is the primary source. It
+        # avoids a network request and contains all supplied sub-district rows.
+        from app.services.demographics.census_2011 import subdistrict_snapshot
+        local = subdistrict_snapshot(request.state_name, request.district_name, request.block_name) if _fetch_public_bytes is _ORIGINAL_FETCH_PUBLIC_BYTES else None
+        if local is not None:
+            return DemographicSnapshot(
+                total_population=local.total_population,
+                households=local.households,
+                working_population=local.working_population,
+                segments=local.segments,
+                source_name=local.source_name,
+                source_url=local.source_url,
+                source_id=local.source_id,
+                source_notes=local.source_notes,
+            )
         district = self._district_records(request)
         state_key = _normalise_geography(request.state_name)
         state_key = self._state_data_aliases.get(state_key, state_key)
@@ -786,11 +817,172 @@ def _mapped_competitor(element: dict[str, Any], allowed_tags: set[str]) -> Mappe
     return MappedCompetitor(
         osm_id=str(element["id"]),
         osm_type=str(element["type"]),
+        provider="OPENSTREETMAP",
+        source_feature_id=str(element["id"]),
         name=str(tags["name"]) if tags.get("name") else None,
         latitude=float(latitude) if latitude is not None else None,
         longitude=float(longitude) if longitude is not None else None,
         tags=visible_tags,
     )
+
+
+def _google_competitors(places: list[dict[str, Any]]) -> list[MappedCompetitor]:
+    mapped: list[MappedCompetitor] = []
+    for place in places:
+        location = place.get("location") if isinstance(place.get("location"), dict) else {}
+        if location.get("latitude") is None or location.get("longitude") is None or not place.get("id"):
+            continue
+        display = place.get("displayName") if isinstance(place.get("displayName"), dict) else {}
+        mapped.append(MappedCompetitor(
+            osm_id=str(place["id"]), osm_type="google_place", provider="GOOGLE_PLACES",
+            source_feature_id=str(place["id"]), name=str(display.get("text")) if display.get("text") else None,
+            latitude=float(location["latitude"]), longitude=float(location["longitude"]),
+            tags={"types": ",".join(str(value) for value in place.get("types", [])[:8])},
+        ))
+    return mapped
+
+
+def _geoapify_competitors(features: list[dict[str, Any]]) -> list[MappedCompetitor]:
+    mapped: list[MappedCompetitor] = []
+    for feature in features:
+        properties = feature.get("properties") if isinstance(feature.get("properties"), dict) else {}
+        geometry = feature.get("geometry") if isinstance(feature.get("geometry"), dict) else {}
+        coordinates = geometry.get("coordinates") if isinstance(geometry.get("coordinates"), list) else []
+        place_id = properties.get("place_id")
+        if not place_id or len(coordinates) < 2:
+            continue
+        categories = properties.get("categories") if isinstance(properties.get("categories"), list) else []
+        mapped.append(MappedCompetitor(
+            osm_id=str(place_id), osm_type="geoapify_place", provider="GEOAPIFY", source_feature_id=str(place_id),
+            name=str(properties.get("name")) if properties.get("name") else None,
+            latitude=float(coordinates[1]), longitude=float(coordinates[0]),
+            tags={"categories": ",".join(str(value) for value in categories[:8])},
+        ))
+    return mapped
+
+
+def _snapshot_competitors(request: CompetitorMappingRequest, category: BusinessCategory) -> list[MappedCompetitor]:
+    if os.getenv("VYAPARSATHI_LOCAL_OSM_SNAPSHOT_ENABLED", "false").lower() not in {"1", "true", "yes"} or not osm_snapshot_available():
+        return []
+    allowed_keys = {key for tag in category.osm_competitor_tags for key in tag}
+    return [MappedCompetitor(
+        osm_id=item["osm_id"], osm_type=item["osm_type"], provider="OPENSTREETMAP", source_feature_id=item["osm_id"],
+        name=item["name"], latitude=item["latitude"], longitude=item["longitude"],
+        tags={key: str(value) for key, value in item["tags"].items() if key in allowed_keys or key in {"name", "brand"}},
+        distance_km=round(float(item["distance_km"]), 3),
+    ) for item in nearby_points(request.latitude, request.longitude, category.osm_competitor_tags)]
+
+
+def _deduplicate_competitors(items: list[MappedCompetitor]) -> list[MappedCompetitor]:
+    """Remove exact source duplicates and cross-provider records at one named point."""
+    unique: dict[tuple[str, str], MappedCompetitor] = {}
+    named_coordinate_keys: set[tuple[str, float, float]] = set()
+    for item in items:
+        source_key = (item.provider, item.source_feature_id or item.osm_id)
+        if source_key in unique:
+            continue
+        if item.name and item.latitude is not None and item.longitude is not None:
+            place_key = (item.name.casefold().strip(), round(item.latitude, 5), round(item.longitude, 5))
+            if place_key in named_coordinate_keys:
+                continue
+            named_coordinate_keys.add(place_key)
+        unique[source_key] = item
+    return list(unique.values())
+
+
+def _provider_mapping(request: CompetitorMappingRequest, category: BusinessCategory, demographics: Optional[DemographicSnapshot]) -> Optional[CompetitorMappingResponse]:
+    """Build a radius-first result from the local snapshot and live providers."""
+    enabled = os.getenv("VYAPARSATHI_LIVE_PLACE_PROVIDERS_ENABLED", "false").lower() in {"1", "true", "yes"}
+    multi_source_enabled = os.getenv("VYAPARSATHI_MULTISOURCE_COMPETITORS_ENABLED", "false").lower() in {"1", "true", "yes"}
+    competitors = _snapshot_competitors(request, category) if enabled and multi_source_enabled else []
+    notes: list[str] = []
+    provenance: list[DataProvenance] = ([] if demographics is None else [DataProvenance(
+        source_id=demographics.source_id, source_name=demographics.source_name, source_url=demographics.source_url,
+        data_type=DataClassification.VERIFIED, last_verified=datetime.now(timezone.utc), confidence=ConfidenceLevel.HIGH,
+        notes=demographics.source_notes,
+    )])
+    if osm_snapshot_available() and competitors:
+        provenance.append(DataProvenance(source_id="OSM_INDIA_LOCAL_SNAPSHOT", source_name="OpenStreetMap India snapshot", source_url=OSM_SOURCE_URL,
+            data_type=DataClassification.VERIFIED, last_verified=datetime.now(timezone.utc), confidence=ConfidenceLevel.MEDIUM,
+            notes="Local snapshot; mapped businesses are observed features, not a complete business census."))
+    if enabled and multi_source_enabled:
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            google_future = pool.submit(google_places_for_category, category.name, request.latitude, request.longitude, request.state_name, request.district_name, request.village_name or request.block_name or request.district_name)
+            geoapify_future = pool.submit(geoapify_places_for_category, category.name, request.latitude, request.longitude)
+            try:
+                values = _google_competitors(google_future.result())
+                competitors.extend(values)
+                if values:
+                    provenance.append(DataProvenance(source_id="GOOGLE_PLACES_LIVE", source_name="Google Places API", source_url="https://developers.google.com/maps/documentation/places/web-service",
+                        data_type=DataClassification.VERIFIED, last_verified=datetime.now(timezone.utc), confidence=ConfidenceLevel.MEDIUM,
+                        notes="Live nearby place search; results are provider-ranked and not a complete business census."))
+            except ExternalGeoUnavailable as exc:
+                notes.append(str(exc))
+            try:
+                values = _geoapify_competitors(geoapify_future.result())
+                competitors.extend(values)
+                if values:
+                    provenance.append(DataProvenance(source_id="GEOAPIFY_PLACES_LIVE", source_name="Geoapify Places API", source_url="https://www.geoapify.com/",
+                        data_type=DataClassification.VERIFIED, last_verified=datetime.now(timezone.utc), confidence=ConfidenceLevel.MEDIUM,
+                        notes="Live OSM-derived nearby place search; results may overlap OpenStreetMap records."))
+            except ExternalGeoUnavailable as exc:
+                notes.append(str(exc))
+    competitors = _deduplicate_competitors(competitors)
+    if not competitors:
+        return None
+    distances = []
+    within_radius: list[MappedCompetitor] = []
+    for item in competitors:
+        if item.latitude is not None and item.longitude is not None:
+            distance = haversine_km(request.latitude, request.longitude, item.latitude, item.longitude)
+            item.distance_km = round(distance, 3)
+            if distance <= 10:
+                distances.append(distance)
+            if distance <= request.radius_km:
+                within_radius.append(item)
+    competitors = within_radius
+    if not competitors:
+        return None
+    competitors.sort(key=lambda item: item.distance_km if item.distance_km is not None else 999999)
+    target_population = _weighted_target_population(category, demographics) if demographics else None
+    total = len(competitors)
+    return CompetitorMappingResponse(
+        status="AVAILABLE", block_name=request.village_name or request.block_name or request.district_name, analysis_scope=request.analysis_scope, category_id=request.category_id,
+        mapped_competitor_count=total, mapped_competitors=competitors[:MAX_RETURNED_COMPETITORS],
+        competitors_per_1000_residents=round(total * 1000 / demographics.total_population, 4) if demographics else None,
+        competitors_per_1000_target_customers=round(total * 1000 / target_population, 4) if target_population else None,
+        demographics=DemographicMappingContext(total_population=demographics.total_population, households=demographics.households,
+            working_population=demographics.working_population, weighted_target_population_proxy=target_population) if demographics else None,
+        radius_supply=RadiusSupplyContext(within_2km=sum(value <= 2 for value in distances), within_5km=sum(value <= 5 for value in distances), within_10km=sum(value <= 10 for value in distances)),
+        accessibility=_accessibility(request.latitude, request.longitude, competitors), confidence=ConfidenceLevel.MEDIUM,
+        methodology=[f"Competitor records are searched around the selected {request.analysis_scope.lower()} analysis coordinate using cumulative 2 km, 5 km and 10 km geodesic bands.", *notes],
+        limitations=["Results combine mapped and live provider records. They are evidence of observed businesses, not a complete register of formal or informal competitors.", "Duplicates across providers are removed only when source IDs match; similarly named places may require local confirmation.", *( ["A Census population denominator is unavailable at the selected scope, so per-resident density is withheld."] if demographics is None else [])],
+        data_provenance=provenance,
+    )
+
+
+def _accessibility(origin_latitude: float, origin_longitude: float,
+                   competitors: list[MappedCompetitor]) -> AccessibilityContext:
+    candidates = [item for item in competitors if item.latitude is not None and item.longitude is not None]
+    if not candidates:
+        return AccessibilityContext(status="INSUFFICIENT", limitations=["No competitor coordinate is available for routing."])
+    nearest = min(candidates, key=lambda item: haversine_km(
+        origin_latitude, origin_longitude, item.latitude, item.longitude
+    ))
+    straight_line = haversine_km(origin_latitude, origin_longitude, nearest.latitude, nearest.longitude)
+    try:
+        route = route_summary(origin_latitude, origin_longitude, nearest.latitude, nearest.longitude)
+        return AccessibilityContext(
+            status="AVAILABLE", nearest_competitor_distance_km=round(straight_line, 3),
+            nearest_competitor_drive_distance_km=round(route.distance_km, 3),
+            nearest_competitor_drive_time_minutes=round(route.duration_minutes, 2), provider=route.provider,
+            limitations=["Routing describes the nearest mapped competitor, not customer travel behaviour."],
+        )
+    except ExternalGeoUnavailable as exc:
+        return AccessibilityContext(
+            status="INSUFFICIENT", nearest_competitor_distance_km=round(straight_line, 3),
+            limitations=[str(exc)],
+        )
 
 
 def _weighted_target_population(category: BusinessCategory, demographics: DemographicSnapshot) -> Optional[float]:
@@ -817,7 +1009,8 @@ def _insufficient_response(
 ) -> CompetitorMappingResponse:
     return CompetitorMappingResponse(
         status="INSUFFICIENT",
-        block_name=request.block_name,
+        block_name=request.village_name or request.block_name or request.district_name,
+        analysis_scope=request.analysis_scope,
         category_id=request.category_id,
         confidence=ConfidenceLevel.LOW,
         demographics=demographics,
@@ -838,10 +1031,19 @@ def analyze_live_competitor_mapping(request: CompetitorMappingRequest) -> Compet
             request, "The selected business category has no configured OpenStreetMap competitor tags."
         )
 
-    try:
-        demographics = PublicDemographicsApi().fetch(request)
-    except LiveDataUnavailable as exc:
-        return _insufficient_response(request, str(exc))
+    demographics: Optional[DemographicSnapshot] = None
+    if request.analysis_scope == "SUBDISTRICT" and request.block_name:
+        try:
+            demographics = PublicDemographicsApi().fetch(request)
+        except LiveDataUnavailable:
+            demographics = None
+
+    provider_result = _provider_mapping(request, category, demographics)
+    if provider_result is not None:
+        return provider_result
+
+    if demographics is None:
+        return _insufficient_response(request, "No live mapped businesses were found for the selected location scope. Population-normalized metrics require a matched Census sub-district.")
 
     demographic_provenance = DataProvenance(
         source_id=demographics.source_id,
@@ -879,6 +1081,56 @@ def analyze_live_competitor_mapping(request: CompetitorMappingRequest) -> Compet
             working_population=demographics.working_population,
             weighted_target_population_proxy=_weighted_target_population(category, demographics),
         )
+        try:
+            google_competitors = _google_competitors(google_places_for_category(
+                category.name, request.latitude, request.longitude,
+                request.state_name, request.district_name, request.block_name,
+            ))
+        except ExternalGeoUnavailable:
+            google_competitors = []
+        if google_competitors:
+            target_population = _weighted_target_population(category, demographics)
+            google_competitors = [item for item in google_competitors if item.latitude is None or item.longitude is None or haversine_km(
+                request.latitude, request.longitude, item.latitude, item.longitude
+            ) <= request.radius_km]
+            if not google_competitors:
+                return _insufficient_response(request, "No mapped businesses were found inside the selected radius.", provenance, demographic_context)
+            distances = [haversine_km(request.latitude, request.longitude, item.latitude, item.longitude) for item in google_competitors if item.latitude is not None and item.longitude is not None]
+            competitor_count = len(google_competitors)
+            provenance.append(DataProvenance(
+                source_id="GOOGLE_PLACES_TEXT_SEARCH", source_name="Google Places API",
+                source_url="https://developers.google.com/maps/documentation/places/web-service/text-search",
+                data_type=DataClassification.VERIFIED, last_verified=datetime.now(timezone.utc),
+                confidence=ConfidenceLevel.MEDIUM,
+                notes="Live text-search results around the selected coordinate; results are not a complete business census.",
+            ))
+            return CompetitorMappingResponse(
+                status="AVAILABLE", block_name=request.block_name, category_id=request.category_id,
+                mapped_competitor_count=competitor_count, mapped_competitors=google_competitors,
+                competitors_per_1000_residents=round(competitor_count * 1000 / demographics.total_population, 4),
+                competitors_per_1000_target_customers=(
+                    round(competitor_count * 1000 / target_population, 4) if target_population else None
+                ),
+                demographics=demographic_context,
+                radius_supply=RadiusSupplyContext(
+                    within_2km=sum(distance <= 2 for distance in distances),
+                    within_5km=sum(distance <= 5 for distance in distances),
+                    within_10km=sum(distance <= 10 for distance in distances),
+                ),
+                accessibility=_accessibility(request.latitude, request.longitude, google_competitors),
+                confidence=ConfidenceLevel.MEDIUM,
+                methodology=[
+                    "Local Census demographics are matched to the selected sub-district.",
+                    "Google Places is used only as a live fallback when OpenStreetMap cannot verify the administrative boundary.",
+                    "Radius counts use geodesic distance from the selected analysis point.",
+                ],
+                limitations=[
+                    str(exc),
+                    "Google Places search results are ranked and capped; they are not a complete census of formal or informal competitors.",
+                    "Commercial-feature density is unavailable when the Google Places fallback is used.",
+                ],
+                data_provenance=provenance,
+            )
         return _insufficient_response(
             request,
             str(exc),
@@ -905,6 +1157,18 @@ def analyze_live_competitor_mapping(request: CompetitorMappingRequest) -> Compet
         _mapped_competitor(element, allowed_tag_keys)
         for element in sorted(competitor_elements, key=lambda item: str(item.get("id")))[:MAX_RETURNED_COMPETITORS]
     ]
+    # Count every returned OSM feature with a coordinate.  The bands are
+    # cumulative and deliberately describe observed supply only.
+    distances = []
+    for element in competitor_elements:
+        candidate = _mapped_competitor(element, allowed_tag_keys)
+        if candidate.latitude is not None and candidate.longitude is not None:
+            distances.append(haversine_km(request.latitude, request.longitude, candidate.latitude, candidate.longitude))
+    radius_supply = RadiusSupplyContext(
+        within_2km=sum(distance <= 2 for distance in distances),
+        within_5km=sum(distance <= 5 for distance in distances),
+        within_10km=sum(distance <= 10 for distance in distances),
+    )
     limitations = [
         "OpenStreetMap contains mapped businesses and commercial features, not a complete census of formal or informal businesses.",
         "Density is normalized from observed public records; it is not an estimate of unrecorded businesses.",
@@ -941,10 +1205,13 @@ def analyze_live_competitor_mapping(request: CompetitorMappingRequest) -> Compet
             commercial_features_per_1000_residents=commercial_per_1000,
             competitors_per_100_commercial_features=per_100_commercial,
         ),
+        radius_supply=radius_supply,
+        accessibility=_accessibility(request.latitude, request.longitude, mapped_competitors),
         confidence=ConfidenceLevel.MEDIUM,
         methodology=[
             "OpenStreetMap verifies the requested administrative block at the submitted coordinate.",
             "OpenStreetMap business tags configured for the selected category are counted within that block.",
+            "Radius bands are cumulative geodesic distances from the selected analysis point and count only mapped competitors with coordinates.",
             "Competitor counts are normalized using the matching public block-demographics record and observed commercial activity.",
         ],
         limitations=limitations,
@@ -969,10 +1236,26 @@ def resolve_administrative_location(
             ], data_provenance=[_osm_provenance()],
         )
     except LiveDataUnavailable as exc:
-        return AdministrativeLocationResponse(
-            status="INSUFFICIENT", limitations=[str(exc), "No coordinates were inferred from the LGD code."],
-            data_provenance=[_osm_provenance()],
-        )
+        try:
+            point = geocode_administrative_area(state_name, district_name, block_name)
+            return AdministrativeLocationResponse(
+                status="AVAILABLE", latitude=point.latitude, longitude=point.longitude,
+                limitations=[
+                    str(exc),
+                    f"The analysis point is the geocoded administrative-area result from {point.provider}; it is not a boundary centroid guarantee.",
+                ],
+                data_provenance=[_osm_provenance(), DataProvenance(
+                    source_id=point.source_id or point.provider.upper().replace(" ", "_"),
+                    source_name=point.provider, data_type=DataClassification.VERIFIED,
+                    last_verified=datetime.now(timezone.utc), confidence=ConfidenceLevel.MEDIUM,
+                    notes="Fallback coordinate used only after the OpenStreetMap boundary lookup failed.",
+                )],
+            )
+        except ExternalGeoUnavailable as provider_exc:
+            return AdministrativeLocationResponse(
+                status="INSUFFICIENT", limitations=[str(exc), str(provider_exc), "No coordinates were inferred from the Census code."],
+                data_provenance=[_osm_provenance()],
+            )
 
 
 def get_india_administrative_options(
@@ -1012,6 +1295,10 @@ def get_india_administrative_options(
     # for dropdown navigation. They are local, verified, and avoid any public
     # network dependency during a user's State → District → Block selection.
     from app.services.market.offline_administrative_index import lookup as offline_lookup
+    from app.services.demographics.census_2011 import administrative_options as local_census_options
+    local_result = local_census_options(level, parent_id, state_name, district_name)
+    if local_result is not None:
+        return local_result
     offline_result = offline_lookup(level, parent_id)
     if offline_result is not None:
         return offline_result

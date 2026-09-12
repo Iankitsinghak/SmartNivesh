@@ -28,6 +28,33 @@ SCORE_THRESHOLDS = {
     "VERY_STRONG": (90, 100)
 }
 
+# Deterministic baseline finance parameters.  Scheme routing reads these same
+# values, preventing the legacy /analyze endpoint and /schemes/route from
+# drifting apart.
+MICRO_FINANCE_MAX_COST = 140_000
+MICRO_FINANCE_INTEREST = 6.5
+MICRO_FINANCE_TENURE_MONTHS = 36
+MICRO_FINANCE_MORATORIUM = 3
+MICRO_FINANCE_MAX_LOAN = 125_000
+TERM_LOAN_MAX_COST = 5_000_000
+TERM_LOAN_INTEREST = 8.0
+TERM_LOAN_TENURE_MONTHS = 84
+TERM_LOAN_MORATORIUM = 6
+TERM_LOAN_MAX_LOAN = 4_500_000
+
+SCHEME_CONFIG_MICRO_FINANCE = {
+    "scheme_code": "MF-01", "name": "NSFDC Micro Finance Scheme",
+    "max_project_cost": MICRO_FINANCE_MAX_COST, "maximum_loan": MICRO_FINANCE_MAX_LOAN,
+    "interest_rate": MICRO_FINANCE_INTEREST, "tenure_years": 3,
+    "moratorium_months": MICRO_FINANCE_MORATORIUM, "financing_percentage": 0.90,
+}
+SCHEME_CONFIG_TERM_LOAN = {
+    "scheme_code": "TL-01", "name": "NSFDC Term Loan",
+    "max_project_cost": TERM_LOAN_MAX_COST, "maximum_loan": TERM_LOAN_MAX_LOAN,
+    "interest_rate": TERM_LOAN_INTEREST, "tenure_years": 7,
+    "moratorium_months": TERM_LOAN_MORATORIUM, "financing_percentage": 0.90,
+}
+
 # Risk/Threat analysis thresholds
 RISK_THRESHOLDS = {
     "SEASONALITY": {

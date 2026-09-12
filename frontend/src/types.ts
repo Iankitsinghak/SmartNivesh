@@ -27,14 +27,17 @@ export interface CompetitorMapping {
   status: 'AVAILABLE' | 'INSUFFICIENT'
   block_id?: string
   block_name: string
+  analysis_scope?: 'DISTRICT' | 'SUBDISTRICT' | 'VILLAGE'
   block_admin_level?: string
   category_id: string
   mapped_competitor_count?: number
-  mapped_competitors: Array<{ osm_id: string; osm_type: string; name?: string; latitude?: number; longitude?: number; tags: Record<string, string> }>
+  mapped_competitors: Array<{ osm_id: string; osm_type: string; provider?: 'OPENSTREETMAP' | 'GOOGLE_PLACES' | 'GEOAPIFY'; source_feature_id?: string; name?: string; latitude?: number; longitude?: number; distance_km?: number; tags: Record<string, string> }>
   competitors_per_1000_residents?: number
   competitors_per_1000_target_customers?: number
   demographics?: { total_population?: number; households?: number; working_population?: number; weighted_target_population_proxy?: number }
   economic_context?: { mapped_commercial_features?: number; commercial_features_per_1000_residents?: number; competitors_per_100_commercial_features?: number }
+  radius_supply?: { within_2km: number; within_5km: number; within_10km: number }
+  accessibility?: { status: 'AVAILABLE' | 'INSUFFICIENT'; nearest_competitor_distance_km?: number; nearest_competitor_drive_distance_km?: number; nearest_competitor_drive_time_minutes?: number; provider?: string; limitations: string[] }
   confidence: string
   methodology: string[]
   limitations: string[]
@@ -56,7 +59,7 @@ export interface IndiaAdministrativeOptions {
   options: IndiaAdministrativeOption[]
   confidence: string
   limitations: string[]
-  data_provenance: Array<{ source_id: string; source_name: string; data_type: string; confidence: string }>
+  data_provenance: Array<{ source_id: string; source_name: string; source_url?: string; data_type: string; confidence: string }>
 }
 
 export interface AdministrativeLocation {
@@ -67,6 +70,39 @@ export interface AdministrativeLocation {
   block_osm_id?: string
   limitations: string[]
   data_provenance: Array<{ source_id: string; source_name: string; source_url?: string; data_type: string; confidence: string }>
+}
+
+export interface LocalDemographics {
+  status: 'AVAILABLE' | 'INSUFFICIENT'
+  geographic_scope: string
+  total_population?: number
+  households?: number
+  working_population?: number
+  population_0_6?: number
+  census_year: string
+  limitations: string[]
+  data_provenance: Array<{ source_id: string; source_name: string; source_url?: string; notes?: string }>
+}
+
+export interface MapplsSuggestion {
+  type: 'STATE' | 'DISTRICT' | 'SUB_DISTRICT' | 'VILLAGE'
+  place_name: string
+  place_address?: string
+  alternate_name?: string
+  mappls_eloc: string
+}
+
+export interface MapplsAutosuggestResponse {
+  status: 'AVAILABLE' | 'INSUFFICIENT'
+  suggestions: MapplsSuggestion[]
+  limitations: string[]
+}
+
+export interface AssessmentAssistantResponse {
+  answer: string
+  language: 'en' | 'hi'
+  generated_by: 'gemini' | 'safe_fallback'
+  limitations: string[]
 }
 
 export interface ProductMarketValue {
@@ -110,6 +146,23 @@ export interface FinancialRoadmapRequest {
   monthly_variable_cost?: number
   expected_monthly_revenue?: number
   operating_reserve_months?: number
+}
+
+export interface FinancialIntelligence {
+  calculated_project_cost: number
+  calculated_loan_requirement: number
+  monthly_emi: number
+  total_repayment: number
+  total_interest: number
+  revenue?: { status: string; monthly_revenue?: number; methodology: string }
+  costs?: { status: string; variable_cost?: number; fixed_cost?: number; total_operating_cost?: number; operating_profit?: number; methodology: string[] }
+  working_capital?: { status: string; requirement?: number; methodology: string }
+  repayment_metrics?: { status: string; available_monthly_cash?: number; repayment_coverage?: number; monthly_cash_surplus?: number; methodology: string }
+  scenario_results: Array<{ name: 'CONSERVATIVE' | 'BASE' | 'OPTIMISTIC'; status: string; monthly_revenue?: number; monthly_operating_cost?: number; operating_profit?: number; repayment_coverage?: number; monthly_cash_after_emi?: number }>
+  recommendation?: { status: string; recommended_project_cost?: number; recommended_loan?: number; monthly_emi?: number; base_repayment_coverage?: number; conservative_repayment_coverage?: number; financial_feasibility: string; methodology: string[] }
+  feasibility?: { status: string; repayment_coverage?: number; conservative_repayment_coverage?: number; monthly_cash_surplus?: number; downside_status: string; methodology: string }
+  assumptions: string[]
+  limitations: string[]
 }
 
 export interface FinancialRoadmap {

@@ -7,3 +7,8 @@ frontend/dist/
 .env
 backend/.env
 backend/.lookup-cache/
+backend/data/census_2011.sqlite
+backend/data/osm_competitors.sqlite
+backend/data/*.importing
+vyaparsathi.db
+backend/vyaparsathi.db

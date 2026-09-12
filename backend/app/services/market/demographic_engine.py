@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from typing import Optional, Dict, Any
 from app.schemas.demographic import Demographics
 from app.schemas.business import BusinessCategory
@@ -20,6 +21,13 @@ def get_demographics(location_id: str) -> Optional[Demographics]:
         pass
     finally:
         db.close()
+    try:
+        with (Path(__file__).resolve().parents[3] / "data" / "demographics.json").open("r") as handle:
+            for record in json.load(handle):
+                if record.get("location_id") == location_id:
+                    return Demographics(**record)
+    except Exception:
+        pass
     return None
 
 def analyze_demographics(demographics: Demographics, category: BusinessCategory) -> Dict[str, Any]:
@@ -39,7 +47,7 @@ def analyze_demographics(demographics: Demographics, category: BusinessCategory)
     max_possible = 0.0
     signals = {}
 
-    demo_dict = demographics.dict()
+    demo_dict = demographics.model_dump()
     total_pop = demo_dict.get("total_population", 1) # Avoid division by zero
 
     for segment in category.target_segments:
