@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   Accessibility, AlertTriangle, ArrowLeft, ArrowRight, BarChart3, Building2,
   Calculator, Check, ChevronDown, Database, FileDown, IndianRupee,
-  Eye, ExternalLink, Info, Landmark, LoaderCircle, MapPin, Menu, Printer, RefreshCw,
+  ExternalLink, Info, Landmark, LoaderCircle, MapPin, Menu, Printer, RefreshCw,
   RotateCcw, Search, ShieldCheck, Store,
 } from 'lucide-react'
 import { askAssessmentAssistant, checkHealth, getFinancialIntelligence, getFinancialRoadmap, getIndiaAdministrativeOptions, getLocalDemographics, getMapplsAutosuggest, getProductMarketValue, mapLiveCompetitors, resolveAdministrativeLocation } from './api'
@@ -233,9 +233,15 @@ function App() {
   }
 
   const canContinue = step === 0 ? Boolean(stateId && districtId) : step === 1 ? financial?.assessment.status === 'VALID' && !financeLoading : true
+  function navigate(target: { screen: Screen; step?: number }) {
+    setScreen(target.screen)
+    if (target.step != null) setStep(target.step)
+    setMobileNav(false)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
   useEffect(() => { document.documentElement.lang = 'en' }, [])
   return <div className={largeText ? 'app large-text' : 'app'}>
-    <ServiceHeader largeText={largeText} setLargeText={setLargeText} mobileNav={mobileNav} setMobileNav={setMobileNav} />
+    <ServiceHeader screen={screen} step={step} onNavigate={navigate} largeText={largeText} setLargeText={setLargeText} mobileNav={mobileNav} setMobileNav={setMobileNav} />
     <div className="service-strip"><span><ShieldCheck size={15} /> Independent decision-support service</span><span className={`api-state ${health}`}>{health === 'online' ? 'Analysis service connected' : health === 'checking' ? 'Checking analysis service' : 'Analysis service unavailable'}</span></div>
     {screen === 'start' && <StartScreen onStart={() => { setScreen('assessment'); setStep(0) }} onLoan={() => { setScreen('assessment'); setStep(1) }} />}
     {screen === 'assessment' && <main className="page-wrap assessment-page">
@@ -260,8 +266,25 @@ function App() {
   </div>
 }
 
-function ServiceHeader({ largeText, setLargeText, mobileNav, setMobileNav }: { largeText: boolean; setLargeText: (v: boolean) => void; mobileNav: boolean; setMobileNav: (v: boolean) => void }) {
-  return <header className="service-header"><button className="brand" onClick={() => window.location.reload()} aria-label="VyaparSathi home"><span className="emblem">VS</span><span><strong>VyaparSathi</strong><small>Rural Enterprise Advisory</small></span></button><nav className="service-nav" aria-label="Assessment sections"><span>Location</span><span>Capital</span><span>Business</span><span>Feasibility</span><span>Finance</span></nav><div className={mobileNav ? 'header-tools open' : 'header-tools'}><button className="header-button" aria-pressed={largeText} onClick={() => setLargeText(!largeText)}><Accessibility size={17} /> <span>Text size</span></button></div><button className="menu-button" onClick={() => setMobileNav(!mobileNav)} aria-expanded={mobileNav} aria-label="Open menu"><Menu /></button></header>
+function ServiceHeader({ screen, step, onNavigate, largeText, setLargeText, mobileNav, setMobileNav }: { screen: Screen; step: number; onNavigate: (target: { screen: Screen; step?: number }) => void; largeText: boolean; setLargeText: (v: boolean) => void; mobileNav: boolean; setMobileNav: (v: boolean) => void }) {
+  const items = [
+    ['Overview', { screen: 'start' as Screen }],
+    ['Location', { screen: 'assessment' as Screen, step: 0 }],
+    ['Capital', { screen: 'assessment' as Screen, step: 1 }],
+    ['Business', { screen: 'assessment' as Screen, step: 2 }],
+    ['Market analysis', { screen: 'assessment' as Screen, step: 3 }],
+    ['Finance', { screen: 'assessment' as Screen, step: 4 }],
+    ['Full report', { screen: 'report' as Screen }],
+  ] as const
+  const active = (target: { screen: Screen; step?: number }) => screen === target.screen && (target.step == null || step === target.step)
+  return <header className="service-header">
+    <div className="header-primary">
+      <button className="brand" onClick={() => onNavigate({ screen: 'start' })} aria-label="Go to VyaparSathi overview"><span className="emblem">VS</span><span><strong>VyaparSathi</strong><small>Independent enterprise decision support</small></span></button>
+      <div className="header-tools"><button className="header-button" aria-pressed={largeText} onClick={() => setLargeText(!largeText)}><Accessibility size={17} /> <span>{largeText ? 'Standard text' : 'Larger text'}</span></button></div>
+      <button className="menu-button" onClick={() => setMobileNav(!mobileNav)} aria-expanded={mobileNav} aria-controls="primary-navigation" aria-label={mobileNav ? 'Close navigation menu' : 'Open navigation menu'}><Menu /></button>
+    </div>
+    <nav id="primary-navigation" className={mobileNav ? 'top-navigation open' : 'top-navigation'} aria-label="Primary service navigation">{items.map(([label, target]) => <button key={label} className={active(target) ? 'active' : ''} aria-current={active(target) ? 'page' : undefined} onClick={() => onNavigate(target)}>{label}</button>)}</nav>
+  </header>
 }
 
 function StartScreen({ onStart, onLoan }: { onStart: () => void; onLoan: () => void }) {
@@ -429,14 +452,40 @@ function ReportPage({ locale, location, category, financial, financialIntelligen
     <ReportSection title="Competitor mapping" eyebrow="03 · EXISTING SUPPLY"><div className="competitor-report"><div className="big-stat"><strong>{competitors?.mapped_competitor_count ?? '—'}</strong><span>mapped similar businesses in the selected search radius</span><Badge kind={competitors?.status === 'AVAILABLE' ? 'PUBLIC DATA' : 'VERIFICATION REQUIRED'} /></div><div><h3>Competition evidence</h3><div className="financial-grid"><Metric label="Competitors per 1,000 residents" value={competitors?.competitors_per_1000_residents?.toLocaleString('en-IN') ?? 'Unavailable'} note="Mapped businesses ÷ Census 2011 block population × 1,000" /><Metric label="Census 2011 sub-district residents" value={(competitors?.demographics?.total_population ?? demographics?.total_population)?.toLocaleString('en-IN') ?? 'Unavailable'} note="Local Census demographic baseline" /><Metric label="Census 2011 households" value={demographics?.households?.toLocaleString('en-IN') ?? 'Unavailable'} note="Local Census household baseline" /></div><h3>Mapped businesses</h3><p>Select any business row to open its mapped location in Google Maps.</p>{competitors?.mapped_competitors?.length ? <ul className="competitor-list">{competitors.mapped_competitors.slice(0, 12).map((item) => { const query = item.latitude != null && item.longitude != null ? `${item.latitude},${item.longitude}` : item.name || ''; const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`; return <li key={`${item.provider}-${item.osm_id}`}><a className="competitor-map-link" href={mapsUrl} target="_blank" rel="noreferrer" aria-label={`Open ${item.name || 'mapped business'} in Google Maps`}><Store size={16} /><span><b>{item.name || 'Unnamed mapped business'}</b><small>{item.provider === 'GOOGLE_PLACES' ? 'Google Places' : item.provider === 'GEOAPIFY' ? 'Geoapify / OpenStreetMap' : 'OpenStreetMap'} · {item.distance_km != null ? `${item.distance_km.toFixed(1)} km away` : 'distance unavailable'}</small></span><ExternalLink size={17} aria-hidden="true" /></a></li> })}</ul> : null}<h3>Important limitation</h3><p>{competitors?.limitations?.[0] || 'No completed competitor result is available. Mapped records may be incomplete.'}</p></div></div><SourceList sources={[...(competitors?.data_provenance ?? []), ...(demographics?.data_provenance ?? [])]} /></ReportSection>
     <ReportSection title="Product market value" eyebrow="04 · REGIONAL PRICE REFERENCE"><ProductMarketValuePanel result={marketValue} /></ReportSection>
     <ReportSection title="SWOT and risk watch" eyebrow="05 · EVIDENCE-LED DECISION SUPPORT"><SwotAndThreats competitors={competitors} marketValue={marketValue} /><RiskAndOpportunityGuide competitors={competitors} demographics={demographics} /></ReportSection>
-    <ReportSection title="Financial structure" eyebrow="06 · GOVERNMENT-RULE BASELINE">{financialFit ? <div className="finance-summary"><div className="finance-lead"><span>PUBLISHED BASELINE</span><h3>{assessment?.scheme_name}</h3><p>Calculated with the verified registry; eligibility and channel terms are not presumed.</p></div><div className="financial-grid"><Metric label="Available margin" value={formatINR(assessment?.margin_capital ?? 0)} /><Metric label="Project cost" value={formatINR(assessment?.project_cost ?? 0)} /><Metric label="Published-cap financing" value={formatINR(assessment?.eligible_loan ?? 0)} /><Metric label="Required contribution" value={formatINR(assessment?.required_own_contribution ?? 0)} /></div></div> : <UnavailablePanel title="No financial baseline" text={assessment?.message || 'Recalculate after the financial service is available.'} />}<>{financial && <GovernmentSchemeRouter routes={financial.routes} />}</></ReportSection>
+    <ReportSection title="Financial structure" eyebrow="06 · GOVERNMENT-RULE BASELINE">{financialFit ? <><div className="finance-summary"><div className="finance-lead"><span>PUBLISHED BASELINE</span><h3>{assessment?.scheme_name}</h3><p>Calculated with the verified registry; eligibility and channel terms are not presumed.</p></div><div className="financial-grid"><Metric label="Available margin" value={formatINR(assessment?.margin_capital ?? 0)} /><Metric label="Project cost" value={formatINR(assessment?.project_cost ?? 0)} /><Metric label="Published-cap financing" value={formatINR(assessment?.eligible_loan ?? 0)} /><Metric label="Required contribution" value={formatINR(assessment?.required_own_contribution ?? 0)} /></div></div>{financial && <FinancialCompositionChart financial={financial} />}</> : <UnavailablePanel title="No financial baseline" text={assessment?.message || 'Recalculate after the financial service is available.'} />}<>{financial && <GovernmentSchemeRouter routes={financial.routes} />}</></ReportSection>
     {financialFit && <ReportSection title="Quarterly repayment planner" eyebrow="07 · ILLUSTRATIVE REPAYMENT"><div className="repayment-layout"><div className="emi-card"><span>Monthly planning equivalent</span><strong>{formatINR(assessment?.estimated_monthly_instalment ?? 0)}</strong><small>for {assessment?.repayment_months} repayment months</small></div><div className="financial-grid"><Metric label="Quarterly instalment illustration" value={formatINR(assessment?.estimated_quarterly_instalment ?? 0)} /><Metric label="Repayment quarters" value={`${assessment?.repayment_quarters ?? 0}`} /><Metric label="Total repayment illustration" value={formatINR(assessment?.estimated_total_repayment ?? 0)} /><Metric label="Total interest illustration" value={formatINR(assessment?.estimated_total_interest ?? 0)} /></div></div><div className="timeline"><div style={{ flex: assessment?.moratorium_months ?? 1 }}><span>Published moratorium</span><strong>{assessment?.moratorium_months} months</strong></div><div className="repay" style={{ flex: assessment?.repayment_months ?? 1 }}><span>Illustrative repayment</span><strong>{assessment?.repayment_quarters} quarters</strong></div></div><p className="method-note"><Badge kind="ASSUMPTION" /> {assessment?.repayment_frequency_note}</p></ReportSection>}
     <ReportSection title="Cash-flow and working-capital check" eyebrow="08 · USER-SUPPLIED BUSINESS PLAN">{cashflow?.status === 'AVAILABLE' ? <div className="financial-grid"><Metric label="Monthly operating cost" value={formatINR(cashflow.monthly_operating_cost ?? 0)} /><Metric label="Cash before debt" value={formatINR(cashflow.monthly_cash_before_debt ?? 0)} /><Metric label="Cash after baseline EMI" value={formatINR(cashflow.monthly_cash_after_baseline_instalment ?? 0)} /><Metric label="User-chosen cash reserve" value={formatINR(cashflow.operating_reserve_requirement ?? 0)} /></div> : <UnavailablePanel title="Operating affordability requires your actual figures" text={cashflow?.limitations.slice(1).join(' ') || 'Return to Finance and provide your own costs, expected revenue and reserve months. No default business cost is applied.'} />}</ReportSection>
-    <ReportSection title="Financial feasibility scenarios" eyebrow="09 · DETERMINISTIC FINANCIAL INTELLIGENCE"><FinancialIntelligencePanel result={financialIntelligence} /></ReportSection>
+    <ReportSection title="Financial feasibility scenarios" eyebrow="09 · DETERMINISTIC FINANCIAL INTELLIGENCE"><ScenarioComparisonChart result={financialIntelligence} /><FinancialIntelligencePanel result={financialIntelligence} /></ReportSection>
     <ReportSection title="Action plan" eyebrow="10 · APPLICATION READINESS"><ol className="action-list">{(financial?.readiness_actions ?? ['Collect current equipment, fit-out and supplier quotations.', 'Separate working capital from capital expenditure in a project report.', 'Verify scheme eligibility and apply only through the official government channel.']).map((item, i) => <li key={item}><span>{i + 1}</span>{item}</li>)}</ol></ReportSection>
     <ReportSection title="Ask about this assessment" eyebrow="11 · EXPLANATIONS"><AssessmentAssistant locale={locale} context={{ location, business: category, demographics: demographics?.total_population ? { population_2011: demographics.total_population, households_2011: demographics.households } : 'UNKNOWN', competition: competitors ? { status: competitors.status, mapped_similar_businesses: competitors.mapped_competitor_count ?? 'UNKNOWN', radius_supply: competitors.radius_supply ?? 'UNKNOWN', limitations: competitors.limitations } : 'UNKNOWN', financial: financialIntelligence ? { feasibility: financialIntelligence.feasibility?.status, repayment_coverage: financialIntelligence.repayment_metrics?.repayment_coverage, recommended_loan: financialIntelligence.recommendation?.recommended_loan } : 'UNKNOWN', limitations: [...(competitors?.limitations ?? []), ...(demographics?.limitations ?? [])], next_actions: financial?.readiness_actions ?? [] }} /></ReportSection>
     <MethodologyPanel competitors={competitors} marketValue={marketValue} financial={financial} />
   </main>
+}
+
+function FinancialCompositionChart({ financial }: { financial: FinancialRoadmap }) {
+  const assessment = financial.assessment
+  const projectCost = Math.max(assessment.project_cost, 1)
+  const own = Math.min(projectCost, Math.max(0, assessment.margin_capital))
+  const financed = Math.min(Math.max(projectCost - own, 0), Math.max(0, assessment.eligible_loan ?? assessment.requested_loan))
+  const gap = Math.max(0, projectCost - own - financed)
+  const parts = [
+    { label: 'Own margin', value: own, className: 'own' },
+    { label: 'Published-cap financing', value: financed, className: 'financed' },
+    { label: 'Uncovered amount', value: gap, className: 'gap' },
+  ].filter((item) => item.value > 0)
+  return <section className="composition-chart" aria-labelledby="composition-title"><div className="chart-heading"><div><span className="section-label">CAPITAL COMPOSITION</span><h3 id="composition-title">How the indicative project cost is funded</h3></div><Badge kind="CALCULATED" /></div><div className="composition-track" role="img" aria-label={parts.map((item) => `${item.label}: ${formatINR(item.value)}`).join('; ')}>{parts.map((item) => <i key={item.label} className={item.className} style={{ width: `${(item.value / projectCost) * 100}%` }} />)}</div><div className="composition-legend">{parts.map((item) => <div key={item.label}><i className={item.className} /><span>{item.label}</span><strong>{formatINR(item.value)}</strong><small>{Math.round((item.value / projectCost) * 100)}%</small></div>)}</div></section>
+}
+
+function ScenarioComparisonChart({ result }: { result: FinancialIntelligence | null }) {
+  const scenarios = (result?.scenario_results ?? []).filter((item) => item.monthly_revenue != null || item.monthly_operating_cost != null || item.monthly_cash_after_emi != null)
+  if (!scenarios.length) return <UnavailablePanel title="Scenario chart needs your business figures" text="Add expected revenue and monthly costs in Finance to compare conservative, base and optimistic cases." />
+  const max = Math.max(1, ...scenarios.flatMap((item) => [item.monthly_revenue ?? 0, item.monthly_operating_cost ?? 0, Math.max(0, item.monthly_cash_after_emi ?? 0)]))
+  return <section className="scenario-chart" aria-labelledby="scenario-chart-title"><div className="chart-heading"><div><span className="section-label">MONTHLY COMPARISON</span><h3 id="scenario-chart-title">Revenue, operating cost and cash after EMI</h3><p>Each bar uses the same rupee scale across all three planning cases.</p></div><Badge kind="CALCULATED" /></div><div className="scenario-legend" aria-hidden="true"><span><i className="revenue" /> Revenue</span><span><i className="cost" /> Operating cost</span><span><i className="surplus" /> Cash after EMI</span></div><div className="scenario-plot">{scenarios.map((item) => <article key={item.name}><strong>{item.name.charAt(0) + item.name.slice(1).toLowerCase()}</strong><div className="scenario-bars"><ChartBar label="Revenue" value={item.monthly_revenue} max={max} className="revenue" /><ChartBar label="Operating cost" value={item.monthly_operating_cost} max={max} className="cost" /><ChartBar label="Cash after EMI" value={item.monthly_cash_after_emi} max={max} className="surplus" /></div></article>)}</div><p className="chart-footnote">Negative post-EMI cash is shown as ₹0 in bar length and remains visible in the value label.</p></section>
+}
+
+function ChartBar({ label, value, max, className }: { label: string; value?: number; max: number; className: string }) {
+  const width = value == null ? 0 : Math.max(0, (value / max) * 100)
+  return <div className="chart-bar"><span>{label}</span><div><i className={className} style={{ width: `${width}%` }} /></div><b>{value == null ? 'Unavailable' : formatINR(value)}</b></div>
 }
 
 function AssessmentAssistant({ locale, context }: { locale: 'en' | 'hi'; context: Record<string, unknown> }) {
@@ -481,11 +530,12 @@ function ReportSection({ title, eyebrow, children }: { title: string; eyebrow: s
 function StepIntro({ number, title, text }: { number: string; title: string; text: string }) { return <header className="step-intro"><span>{number} / 05</span><h2>{title}</h2><p>{text}</p></header> }
 function CalculationCard({ label, value, badge, formula }: { label: string; value: string; badge: BadgeKind; formula?: string }) { return <article className="calculation-card"><Badge kind={badge} /><span>{label}</span><strong>{value}</strong>{formula && <small>{formula}</small>}</article> }
 function Metric({ label, value, note }: { label: string; value: string; note?: string }) {
-  const [open, setOpen] = useState(false)
-  const explanation = note || 'This figure is based on the current assessment inputs and the source shown in this section. It is decision support, not a guarantee or official approval.'
-  return <article className="report-metric"><div className="metric-label"><span>{label}</span><button className="metric-eye" type="button" onClick={() => setOpen(!open)} aria-label={`Explain ${label}`} aria-expanded={open}><Eye size={14} /></button></div><strong>{value}</strong>{note && <small>{note}</small>}{open && <p className="metric-help">{explanation}</p>}</article>
+  return <article className="report-metric"><div className="metric-label"><span>{label}</span></div><strong>{value}</strong>{note && <small>{note}</small>}</article>
 }
-function Badge({ kind }: { kind: BadgeKind }) { return <span className={`evidence-badge ${kind.toLowerCase().replace(/ /g, '-')}`}>{kind}</span> }
+function Badge({ kind }: { kind: BadgeKind }) {
+  const labels: Partial<Record<BadgeKind, string>> = { 'PUBLIC DATA': 'Verified source', 'VERIFIED GOVT RULE': 'Verified source', 'CALCULATED': 'Calculated', 'ESTIMATE': 'Illustrative', 'ASSUMPTION': 'Illustrative', 'VERIFICATION REQUIRED': 'Needs verification', 'LENDER TERMS REQUIRED': 'Needs verification', 'AVAILABILITY CHECK': 'Needs verification', 'USER INPUT': 'User input' }
+  return <span className={`evidence-badge ${kind.toLowerCase().replace(/ /g, '-')}`}>{labels[kind] ?? kind}</span>
+}
 function Disclaimer() { return <aside className="disclaimer"><ShieldCheck size={20} /><div><strong>Decision-support estimate</strong><p>Results are indicative. Public-data coverage may be incomplete. Final loan eligibility and sanction are determined by the relevant authority.</p></div></aside> }
 function ErrorState({ message }: { message: string }) { return <div className="state-box error" role="alert"><AlertTriangle size={20} /><div><strong>We could not complete this step</strong><p>{message}</p></div></div> }
 function LoadingState({ title, text }: { title: string; text: string }) { return <div className="state-box loading"><LoaderCircle className="spin" size={25} /><div><strong>{title}</strong><p>{text}</p><small>No result is shown until the source responds.</small></div></div> }
