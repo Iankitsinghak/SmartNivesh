@@ -1,18 +1,18 @@
-# VyaparSathi
+# SmartNivesh
 
-**Official product name:** VyaparSathi
+**Official product name:** SmartNivesh
 
 ## Evidence-led business planning for India's local entrepreneurs
 
-VyaparSathi is a modular monolith with a React/Vite frontend and FastAPI backend. It is a decision-support platform for evaluating rural and local enterprise ideas, bringing location intelligence, market signals, financial modelling, government schemes, and risk checks into one explainable workflow so an entrepreneur can move from **“Is this viable here?”** to a practical next step.
+SmartNivesh is a modular monolith with a React/Vite frontend and FastAPI backend. It is a decision-support platform for evaluating rural and local enterprise ideas, bringing location intelligence, market signals, financial modelling, government schemes, and risk checks into one explainable workflow so an entrepreneur can move from **“Is this viable here?”** to a practical next step.
 
-![VyaparSathi architecture and decision flow](assets/vyaparsathi-architecture-flow.png)
+![SmartNivesh architecture and decision flow](assets/vyaparsathi-architecture-flow.png)
 
 > **Evidence-led inputs → deterministic scoring → explainable guidance**
 
-## Why VyaparSathi
+## Why SmartNivesh
 
-Small-business decisions are often made with fragmented data, informal estimates, and unclear financing assumptions. VyaparSathi makes the reasoning visible:
+Small-business decisions are often made with fragmented data, informal estimates, and unclear financing assumptions. SmartNivesh makes the reasoning visible:
 
 - **Local context:** understand the administrative area, population and household evidence around a proposed location.
 - **Market reality:** inspect nearby businesses and points of interest using public-data and configured provider fallbacks.
@@ -37,7 +37,7 @@ The output keeps evidence, assumptions, confidence, limitations, and recommendat
 
 ## Architecture
 
-VyaparSathi is a modular monolith. The browser owns the entrepreneur workflow, while FastAPI owns validation, evidence access, calculations, and response contracts.
+SmartNivesh is a modular monolith. The browser owns the entrepreneur workflow, while FastAPI owns validation, evidence access, calculations, and response contracts.
 
 | Layer | Technology | Responsibility |
 | --- | --- | --- |
@@ -146,7 +146,7 @@ Exact 5 km and 10 km population figures remain `UNKNOWN` unless village or grid 
 ## Repository structure
 
 ```text
-VyaparSathi/
+SmartNivesh/
 ├── backend/
 │   ├── app/
 │   │   ├── api/       FastAPI route modules for market, finance, location, risk, schemes, and assistant features
@@ -206,4 +206,4 @@ cd frontend && npm run build
 
 ## Project status
 
-VyaparSathi is an actively developed decision-support prototype. Provider availability, local datasets, and evidence scope can affect results; the product presents those boundaries explicitly so recommendations remain useful and honest.
+SmartNivesh is an actively developed decision-support prototype. Provider availability, local datasets, and evidence scope can affect results; the product presents those boundaries explicitly so recommendations remain useful and honest.
