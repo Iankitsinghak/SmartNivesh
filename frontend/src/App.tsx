@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import {
-  Accessibility, AlertTriangle, ArrowLeft, ArrowRight, BarChart3, Building2,
-  Calculator, Check, ChevronDown, Database, FileDown, IndianRupee,
+  Accessibility, AlertTriangle, ArrowLeft, ArrowRight, BarChart3,
+  Check, ChevronDown, ChevronLeft, ChevronRight, Database, FileDown, IndianRupee,
   ExternalLink, Info, Landmark, LoaderCircle, MapPin, Menu, Printer, RefreshCw,
   RotateCcw, Search, ShieldCheck, Store,
 } from 'lucide-react'
@@ -9,35 +9,79 @@ import { askAssessmentAssistant, checkHealth, getFinancialIntelligence, getFinan
 import { formatINR } from './finance'
 import type { AssessmentAssistantResponse, CompetitorMapping, FinancialIntelligence, FinancialRoadmap, FinancialRoadmapRequest, GovernmentSchemeRoute, HealthState, IndiaAdministrativeOption, LocalDemographics, MapplsSuggestion, ProductMarketValue } from './types'
 import { INDIA_STATES } from './indiaStates'
+import bannerMarketConfidence from './assets/home-banners/market-confidence.png'
+import bannerBusinessPlanning from './assets/home-banners/business-planning.png'
+import bannerFinanceReadiness from './assets/home-banners/finance-readiness.png'
 
 const categories = [
-  { id: 'CAT-001', name: 'Restaurant', group: 'Food & hospitality', icon: 'FD' },
-  { id: 'CAT-002', name: 'Hotel', group: 'Food & hospitality', icon: 'HT' },
-  { id: 'CAT-003', name: 'Cosmetics', group: 'Retail', icon: 'RT' },
-  { id: 'CAT-004', name: 'Kirana / General Store', group: 'Retail', icon: 'GS' },
-  { id: 'CAT-005', name: 'Tea & Snack Stall', group: 'Food & hospitality', icon: 'TS' },
-  { id: 'CAT-006', name: 'Bakery', group: 'Food & hospitality', icon: 'BK' },
-  { id: 'CAT-007', name: 'Tailoring & Boutique', group: 'Personal services', icon: 'TB' },
-  { id: 'CAT-008', name: 'Beauty Salon', group: 'Personal services', icon: 'BS' },
-  { id: 'CAT-009', name: 'Mobile Phone Shop & Repair', group: 'Repair & retail', icon: 'MR' },
-  { id: 'CAT-010', name: 'Pharmacy / Medical Store', group: 'Retail', icon: 'PH' },
-  { id: 'CAT-011', name: 'Fruit & Vegetable Shop', group: 'Retail', icon: 'FV' },
-  { id: 'CAT-012', name: 'Dairy / Milk Shop', group: 'Retail', icon: 'DM' },
-  { id: 'CAT-013', name: 'Stationery & Photocopy', group: 'Services', icon: 'SP' },
-  { id: 'CAT-014', name: 'Hardware & Electrical Store', group: 'Retail', icon: 'HE' },
-  { id: 'CAT-015', name: 'Furniture & Carpentry', group: 'Manufacturing & services', icon: 'FC' },
-  { id: 'CAT-016', name: 'Welding & Fabrication', group: 'Manufacturing & services', icon: 'WF' },
-  { id: 'CAT-017', name: 'Laundry & Ironing', group: 'Personal services', icon: 'LI' },
-  { id: 'CAT-018', name: 'Bicycle Sales & Repair', group: 'Repair & retail', icon: 'BR' },
-  { id: 'CAT-019', name: 'Agricultural Input Store', group: 'Agriculture support', icon: 'AI' },
-  { id: 'CAT-020', name: 'Textiles & Garment Store', group: 'Retail', icon: 'TG' },
-  { id: 'CAT-021', name: 'Footwear Store & Repair', group: 'Retail & repair', icon: 'FS' },
-  { id: 'CAT-022', name: 'Computer & Digital Service Centre', group: 'Services', icon: 'CD' },
+  { id: 'CAT-001', name: 'Restaurant', group: 'Food & hospitality', icon: 'FD', theme: 'food' },
+  { id: 'CAT-002', name: 'Hotel', group: 'Food & hospitality', icon: 'HT', theme: 'food' },
+  { id: 'CAT-003', name: 'Cosmetics', group: 'Retail', icon: 'RT', theme: 'retail' },
+  { id: 'CAT-004', name: 'Kirana / General Store', group: 'Retail', icon: 'GS', theme: 'retail' },
+  { id: 'CAT-005', name: 'Tea & Snack Stall', group: 'Food & hospitality', icon: 'TS', theme: 'food' },
+  { id: 'CAT-006', name: 'Bakery', group: 'Food & hospitality', icon: 'BK', theme: 'food' },
+  { id: 'CAT-007', name: 'Tailoring & Boutique', group: 'Personal services', icon: 'TB', theme: 'personal' },
+  { id: 'CAT-008', name: 'Beauty Salon', group: 'Personal services', icon: 'BS', theme: 'personal' },
+  { id: 'CAT-009', name: 'Mobile Phone Shop & Repair', group: 'Repair & retail', icon: 'MR', theme: 'repair' },
+  { id: 'CAT-010', name: 'Pharmacy / Medical Store', group: 'Retail', icon: 'PH', theme: 'retail' },
+  { id: 'CAT-011', name: 'Fruit & Vegetable Shop', group: 'Retail', icon: 'FV', theme: 'agriculture' },
+  { id: 'CAT-012', name: 'Dairy / Milk Shop', group: 'Retail', icon: 'DM', theme: 'agriculture' },
+  { id: 'CAT-013', name: 'Stationery & Photocopy', group: 'Services', icon: 'SP', theme: 'service' },
+  { id: 'CAT-014', name: 'Hardware & Electrical Store', group: 'Retail', icon: 'HE', theme: 'repair' },
+  { id: 'CAT-015', name: 'Furniture & Carpentry', group: 'Manufacturing & services', icon: 'FC', theme: 'manufacturing' },
+  { id: 'CAT-016', name: 'Welding & Fabrication', group: 'Manufacturing & services', icon: 'WF', theme: 'manufacturing' },
+  { id: 'CAT-017', name: 'Laundry & Ironing', group: 'Personal services', icon: 'LI', theme: 'personal' },
+  { id: 'CAT-018', name: 'Bicycle Sales & Repair', group: 'Repair & retail', icon: 'BR', theme: 'repair' },
+  { id: 'CAT-019', name: 'Agricultural Input Store', group: 'Agriculture support', icon: 'AI', theme: 'agriculture' },
+  { id: 'CAT-020', name: 'Textiles & Garment Store', group: 'Retail', icon: 'TG', theme: 'personal' },
+  { id: 'CAT-021', name: 'Footwear Store & Repair', group: 'Retail & repair', icon: 'FS', theme: 'repair' },
+  { id: 'CAT-022', name: 'Computer & Digital Service Centre', group: 'Services', icon: 'CD', theme: 'service' },
 ] as const
 
 type Screen = 'start' | 'assessment' | 'report'
+type Locale = 'en' | 'hi' | 'bn' | 'mr' | 'ta'
 type BadgeKind = 'PUBLIC DATA' | 'CALCULATED' | 'ESTIMATE' | 'ASSUMPTION' | 'USER INPUT' | 'VERIFICATION REQUIRED' | 'VERIFIED GOVT RULE' | 'LENDER TERMS REQUIRED' | 'AVAILABILITY CHECK'
 type FinanceProfile = Omit<FinancialRoadmapRequest, 'margin_capital'>
+type AccessibilitySettings = {
+  highContrast: boolean
+  darkContrast: boolean
+  highlightLinks: boolean
+  invert: boolean
+  saturation: boolean
+  lineHeight: boolean
+  textSpacing: boolean
+  bigCursor: boolean
+  hideImages: boolean
+  reduceMotion: boolean
+  keyboardFocus: boolean
+}
+
+const defaultAccessibility: AccessibilitySettings = {
+  highContrast: false,
+  darkContrast: false,
+  highlightLinks: false,
+  invert: false,
+  saturation: false,
+  lineHeight: false,
+  textSpacing: false,
+  bigCursor: false,
+  hideImages: false,
+  reduceMotion: false,
+  keyboardFocus: false,
+}
+
+function loadAccessibilityPreferences() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('vyaparsathi-accessibility') || '{}')
+    return {
+      settings: { ...defaultAccessibility, ...(saved.settings || {}) } as AccessibilitySettings,
+      largeText: Boolean(saved.largeText),
+      smallText: Boolean(saved.smallText),
+    }
+  } catch {
+    return { settings: defaultAccessibility, largeText: false, smallText: false }
+  }
+}
 
 const emptyFinanceProfile: FinanceProfile = {
   activity_type: 'not_sure',
@@ -49,9 +93,14 @@ const emptyFinanceProfile: FinanceProfile = {
 
 function App() {
   const [screen, setScreen] = useState<Screen>(() => localStorage.getItem('vyaparsathi-assessment') ? 'assessment' : 'start')
+  const [locale, setLocale] = useState<Locale>(() => (localStorage.getItem('vyaparsathi-locale') as Locale) || 'en')
   const [step, setStep] = useState(0)
   const [health, setHealth] = useState<HealthState>('checking')
-  const [largeText, setLargeText] = useState(false)
+  const [largeText, setLargeText] = useState(() => loadAccessibilityPreferences().largeText)
+  const [smallText, setSmallText] = useState(() => loadAccessibilityPreferences().smallText)
+  const [accessibilityOpen, setAccessibilityOpen] = useState(false)
+  const [tourOpen, setTourOpen] = useState(false)
+  const [accessibility, setAccessibility] = useState<AccessibilitySettings>(() => loadAccessibilityPreferences().settings)
   const [mobileNav, setMobileNav] = useState(false)
   const [states, setStates] = useState<IndiaAdministrativeOption[]>(INDIA_STATES)
   const [districts, setDistricts] = useState<IndiaAdministrativeOption[]>([])
@@ -215,7 +264,7 @@ function App() {
       mapLiveCompetitors({ latitude, longitude, state_name: selectedState.name, district_name: selectedDistrict.name, district_osm_id: districtOsmId, block_name: selectedBlock?.name, village_name: village || undefined, analysis_scope: village ? 'VILLAGE' : selectedBlock ? 'SUBDISTRICT' : 'DISTRICT', category_id: categoryId, radius_km: radiusOverride }),
     ])
     if (version !== analysisVersion.current) return
-    if (competitorResult.status === 'fulfilled') setCompetitors(competitorResult.value)
+    if (competitorResult.status === 'fulfilled') setCompetitors({ ...competitorResult.value, analysis_point: { latitude, longitude, source: selectedDistrict.latitude != null ? 'Administrative hierarchy coordinate' : 'Verified geocoding provider' } })
     if (competitorResult.status === 'rejected') setAnalysisError('Local Census and affordability analysis completed. Live competitor mapping is temporarily unavailable.')
     setAnalysisLoading(false)
   }
@@ -239,12 +288,29 @@ function App() {
     setMobileNav(false)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
-  useEffect(() => { document.documentElement.lang = 'en' }, [])
-  return <div className={largeText ? 'app large-text' : 'app'}>
-    <ServiceHeader screen={screen} step={step} onNavigate={navigate} largeText={largeText} setLargeText={setLargeText} mobileNav={mobileNav} setMobileNav={setMobileNav} />
-    <div className="service-strip"><span><ShieldCheck size={15} /> Independent decision-support service</span><span className={`api-state ${health}`}>{health === 'online' ? 'Analysis service connected' : health === 'checking' ? 'Checking analysis service' : 'Analysis service unavailable'}</span></div>
-    {screen === 'start' && <StartScreen onStart={() => { setScreen('assessment'); setStep(0) }} onLoan={() => { setScreen('assessment'); setStep(1) }} />}
-    {screen === 'assessment' && <main className="page-wrap assessment-page">
+  useEffect(() => { document.documentElement.lang = locale; localStorage.setItem('vyaparsathi-locale', locale) }, [locale])
+  useEffect(() => {
+    localStorage.setItem('vyaparsathi-accessibility', JSON.stringify({ settings: accessibility, largeText, smallText }))
+  }, [accessibility, largeText, smallText])
+  const accessibilityClasses = [
+    'app', largeText && 'large-text', smallText && 'small-text', accessibility.highContrast && 'a11y-high-contrast',
+    accessibility.darkContrast && 'a11y-dark-contrast', accessibility.highlightLinks && 'a11y-highlight-links',
+    accessibility.invert && 'a11y-invert', accessibility.saturation && 'a11y-saturation',
+    accessibility.lineHeight && 'a11y-line-height', accessibility.textSpacing && 'a11y-text-spacing',
+    accessibility.bigCursor && 'a11y-big-cursor', accessibility.hideImages && 'a11y-hide-images',
+    accessibility.reduceMotion && 'a11y-reduce-motion', accessibility.keyboardFocus && 'a11y-keyboard-focus',
+  ].filter(Boolean).join(' ')
+  function updateAccessibility(change: Partial<AccessibilitySettings>) {
+    setAccessibility((current) => ({ ...current, ...change }))
+  }
+  return <div className={accessibilityClasses}>
+    <a className="skip-link" href="#main-content">Skip to main content</a>
+    <ServiceHeader screen={screen} step={step} locale={locale} setLocale={setLocale} onNavigate={navigate} accessibilityOpen={accessibilityOpen} setAccessibilityOpen={setAccessibilityOpen} tourOpen={tourOpen} setTourOpen={setTourOpen} mobileNav={mobileNav} setMobileNav={setMobileNav} />
+    {accessibilityOpen && <AccessibilityPanel largeText={largeText} setLargeText={setLargeText} smallText={smallText} setSmallText={setSmallText} settings={accessibility} updateSettings={updateAccessibility} onClose={() => setAccessibilityOpen(false)} />}
+    {tourOpen && <GuidedTour onClose={() => setTourOpen(false)} />}
+    <ServiceStrip locale={locale} health={health} />
+    {screen === 'start' && <StartScreen locale={locale} onStart={() => { setScreen('assessment'); setStep(0) }} />}
+    {screen === 'assessment' && <main id="main-content" className="page-wrap assessment-page">
       <div className="assessment-heading"><div><span className="section-label">BUSINESS ASSESSMENT</span><h1>Plan a viable rural enterprise</h1><p>Complete one short step at a time. Your progress is saved on this device.</p></div><button className="quiet-button" onClick={resetAssessment}><RotateCcw size={16} /> Reset</button></div>
       <JourneyMap current={step} />
       <section className="wizard-card" aria-live="polite">
@@ -261,34 +327,180 @@ function App() {
         </div>
       </section>
     </main>}
-    {screen === 'report' && <ReportPage locale="en" location={[village, selectedBlock?.name, selectedDistrict?.name, selectedState?.name].filter(Boolean).join(', ')} category={selectedCategory.name} financial={financial} financialIntelligence={financialIntelligence} competitors={competitors} demographics={demographics} marketValue={marketValue} onRecalculate={() => { setScreen('assessment'); setStep(1) }} />}
-    <footer className="site-footer"><div><strong>VyaparSathi</strong><span>Rural Enterprise Advisory</span></div><p>This is an independent decision-support tool and does not represent a government authority. Final scheme eligibility and sanction are determined by the implementing authority.</p></footer>
+    {screen === 'report' && <ReportPage locale={locale} location={[village, selectedBlock?.name, selectedDistrict?.name, selectedState?.name].filter(Boolean).join(', ')} category={selectedCategory.name} financial={financial} financialIntelligence={financialIntelligence} competitors={competitors} demographics={demographics} marketValue={marketValue} onRecalculate={() => { setScreen('assessment'); setStep(1) }} />}
+    <Footer locale={locale} />
   </div>
 }
 
-function ServiceHeader({ screen, step, onNavigate, largeText, setLargeText, mobileNav, setMobileNav }: { screen: Screen; step: number; onNavigate: (target: { screen: Screen; step?: number }) => void; largeText: boolean; setLargeText: (v: boolean) => void; mobileNav: boolean; setMobileNav: (v: boolean) => void }) {
+function ServiceStrip({ locale, health }: { locale: Locale; health: HealthState }) {
+  const copy = {
+    en: { label: 'Independent decision-support service', online: 'Analysis service connected', checking: 'Checking analysis service', offline: 'Analysis service unavailable' },
+    hi: { label: 'स्वतंत्र निर्णय-सहायता सेवा', online: 'विश्लेषण सेवा जुड़ी है', checking: 'विश्लेषण सेवा जांची जा रही है', offline: 'विश्लेषण सेवा उपलब्ध नहीं है' },
+    bn: { label: 'স্বাধীন সিদ্ধান্ত-সহায়তা পরিষেবা', online: 'বিশ্লেষণ পরিষেবা সংযুক্ত', checking: 'বিশ্লেষণ পরিষেবা পরীক্ষা হচ্ছে', offline: 'বিশ্লেষণ পরিষেবা পাওয়া যাচ্ছে না' },
+    mr: { label: 'स्वतंत्र निर्णय-सहाय्य सेवा', online: 'विश्लेषण सेवा जोडली आहे', checking: 'विश्लेषण सेवा तपासत आहे', offline: 'विश्लेषण सेवा उपलब्ध नाही' },
+    ta: { label: 'சுயாதீன முடிவு-ஆதரவு சேவை', online: 'பகுப்பாய்வு சேவை இணைக்கப்பட்டுள்ளது', checking: 'பகுப்பாய்வு சேவை சரிபார்க்கப்படுகிறது', offline: 'பகுப்பாய்வு சேவை கிடைக்கவில்லை' },
+  }[locale]
+  return <div className="service-strip"><span><ShieldCheck size={15} /> {copy.label}</span><span className={`api-state ${health}`}>{health === 'online' ? copy.online : health === 'checking' ? copy.checking : copy.offline}</span></div>
+}
+
+function ServiceHeader({ screen, step, locale, setLocale, onNavigate, accessibilityOpen, setAccessibilityOpen, tourOpen, setTourOpen, mobileNav, setMobileNav }: { screen: Screen; step: number; locale: Locale; setLocale: (locale: Locale) => void; onNavigate: (target: { screen: Screen; step?: number }) => void; accessibilityOpen: boolean; setAccessibilityOpen: (v: boolean) => void; tourOpen: boolean; setTourOpen: (v: boolean) => void; mobileNav: boolean; setMobileNav: (v: boolean) => void }) {
+  const copy = uiCopy[locale].header
   const items = [
-    ['Overview', { screen: 'start' as Screen }],
-    ['Location', { screen: 'assessment' as Screen, step: 0 }],
-    ['Capital', { screen: 'assessment' as Screen, step: 1 }],
-    ['Business', { screen: 'assessment' as Screen, step: 2 }],
-    ['Market analysis', { screen: 'assessment' as Screen, step: 3 }],
-    ['Finance', { screen: 'assessment' as Screen, step: 4 }],
-    ['Full report', { screen: 'report' as Screen }],
+    [copy.nav.overview, { screen: 'start' as Screen }],
+    [copy.nav.location, { screen: 'assessment' as Screen, step: 0 }],
+    [copy.nav.capital, { screen: 'assessment' as Screen, step: 1 }],
+    [copy.nav.business, { screen: 'assessment' as Screen, step: 2 }],
+    [copy.nav.market, { screen: 'assessment' as Screen, step: 3 }],
+    [copy.nav.finance, { screen: 'assessment' as Screen, step: 4 }],
+    [copy.nav.report, { screen: 'report' as Screen }],
   ] as const
   const active = (target: { screen: Screen; step?: number }) => screen === target.screen && (target.step == null || step === target.step)
   return <header className="service-header">
     <div className="header-primary">
-      <button className="brand" onClick={() => onNavigate({ screen: 'start' })} aria-label="Go to VyaparSathi overview"><span className="emblem">VS</span><span><strong>VyaparSathi</strong><small>Independent enterprise decision support</small></span></button>
-      <div className="header-tools"><button className="header-button" aria-pressed={largeText} onClick={() => setLargeText(!largeText)}><Accessibility size={17} /> <span>{largeText ? 'Standard text' : 'Larger text'}</span></button></div>
-      <button className="menu-button" onClick={() => setMobileNav(!mobileNav)} aria-expanded={mobileNav} aria-controls="primary-navigation" aria-label={mobileNav ? 'Close navigation menu' : 'Open navigation menu'}><Menu /></button>
+      <button className="brand" onClick={() => onNavigate({ screen: 'start' })} aria-label={copy.brandAria}><span className="emblem">SN</span><span><strong>SmartNivesh</strong><small>{copy.tagline}</small></span></button>
+      <div className="header-tools"><label className="language-control"><span className="sr-only">{copy.language}</span><select value={locale} onChange={(event) => setLocale(event.target.value as Locale)} aria-label={copy.language}><option value="en">English</option><option value="hi">हिंदी</option><option value="bn">বাংলা</option><option value="mr">मराठी</option><option value="ta">தமிழ்</option></select><ChevronDown size={14} /></label><button className="header-button tour-trigger" aria-expanded={tourOpen} aria-controls="guided-tour" onClick={() => setTourOpen(!tourOpen)}><Info size={16} /> <span>{copy.how}</span></button><button className="header-button" aria-expanded={accessibilityOpen} aria-controls="accessibility-tools" onClick={() => setAccessibilityOpen(!accessibilityOpen)}><Accessibility size={17} /> <span>{copy.accessibility}</span></button></div>
+      <button className="menu-button" onClick={() => setMobileNav(!mobileNav)} aria-expanded={mobileNav} aria-controls="primary-navigation" aria-label={mobileNav ? copy.closeMenu : copy.openMenu}><Menu /></button>
     </div>
     <nav id="primary-navigation" className={mobileNav ? 'top-navigation open' : 'top-navigation'} aria-label="Primary service navigation">{items.map(([label, target]) => <button key={label} className={active(target) ? 'active' : ''} aria-current={active(target) ? 'page' : undefined} onClick={() => onNavigate(target)}>{label}</button>)}</nav>
   </header>
 }
 
-function StartScreen({ onStart, onLoan }: { onStart: () => void; onLoan: () => void }) {
-  return <main><section className="start-hero"><div className="hero-copy"><span className="section-label">RURAL ENTERPRISE DECISION SUPPORT</span><h1>Understand your local market. Plan your finances. Start with confidence.</h1><p>Assess your local market, understand project finance, and review indicative public schemes through one guided service.</p><div className="hero-actions"><button className="primary-button" onClick={onStart}>Start business assessment <ArrowRight size={18} /></button><button className="secondary-button" onClick={onLoan}>Check loan estimate <Calculator size={18} /></button></div><div className="hero-proof"><span>Location</span><b>1</b><span>Business</span><b>2</b><span>Capital</span><b>3</b><span>Feasibility and finance</span></div></div><aside className="service-summary" aria-label="What this service provides"><div className="summary-icon"><Building2 size={28} /></div><span className="summary-kicker">ASSESSMENT OVERVIEW</span><h2>One guided view of your business idea</h2><ul><li><Check /> Local market evidence</li><li><Check /> Business feasibility signals</li><li><Check /> Scheme and repayment estimate</li></ul><p><Info size={15} /> Takes about 5 minutes. No sign-in required.</p></aside></section><section className="trust-row"><article><MapPin /><div><strong>Local market assessment</strong><span>Based on the area you select</span></div></article><article><BarChart3 /><div><strong>Business feasibility</strong><span>Evidence and limitations shown</span></div></article><article><IndianRupee /><div><strong>Finance planning</strong><span>Caps and contribution included</span></div></article></section><Disclaimer /></main>
+function GuidedTour({ onClose }: { onClose: () => void }) {
+  const [current, setCurrent] = useState(0)
+  const steps = [
+    { title: 'Select your location', text: 'Choose the verified State, District and Sub-district where the enterprise will operate.' },
+    { title: 'Set your capital and business', text: 'Add your available margin, then choose the closest supported business category.' },
+    { title: 'Review local evidence', text: 'Explore mapped competitors, Census baselines and the catchment map before investing.' },
+    { title: 'Check finance and next actions', text: 'Use your own revenue and cost inputs to see repayment readiness and a practical action plan.' },
+  ]
+  const step = steps[current]
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+  return <aside id="guided-tour" className="guided-tour" aria-label="How SmartNivesh works"><div className="tour-progress" aria-label={'Tour step ' + (current + 1) + ' of ' + steps.length}>{steps.map((item, index) => <i className={index === current ? 'current' : index < current ? 'complete' : ''} key={item.title} />)}</div><div className="tour-heading"><span className="section-label">QUICK TOUR</span><button type="button" onClick={onClose} aria-label="Close quick tour">×</button></div><strong>{step.title}</strong><p>{step.text}</p><div className="tour-actions"><button type="button" className="secondary-button" disabled={current === 0} onClick={() => setCurrent((value) => value - 1)}>Back</button>{current < steps.length - 1 ? <button type="button" className="primary-button" onClick={() => setCurrent((value) => value + 1)}>Next</button> : <button type="button" className="primary-button" onClick={onClose}>Start assessment</button>}</div></aside>
+}
+
+function AccessibilityPanel({ largeText, setLargeText, smallText, setSmallText, settings, updateSettings, onClose }: { largeText: boolean; setLargeText: (v: boolean) => void; smallText: boolean; setSmallText: (v: boolean) => void; settings: AccessibilitySettings; updateSettings: (change: Partial<AccessibilitySettings>) => void; onClose: () => void }) {
+  const controls: Array<[keyof AccessibilitySettings, string, string]> = [
+    ['highContrast', 'High contrast', 'Increase contrast between text and surfaces'],
+    ['darkContrast', 'Dark contrast', 'Use a dark, high-contrast reading surface'],
+    ['highlightLinks', 'Highlight links', 'Underline and emphasize links'],
+    ['invert', 'Invert colors', 'Invert page colors for visual comfort'],
+    ['saturation', 'Saturation', 'Increase color separation'],
+  ]
+  function readPage() {
+    if (!('speechSynthesis' in window)) return
+    window.speechSynthesis.cancel()
+    const content = document.querySelector('main')?.textContent?.replace(/\s+/g, ' ').trim()
+    if (content) window.speechSynthesis.speak(new SpeechSynthesisUtterance(content.slice(0, 5000)))
+  }
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
+    document.addEventListener('keydown', closeOnEscape)
+    return () => document.removeEventListener('keydown', closeOnEscape)
+  }, [onClose])
+  return <aside id="accessibility-tools" className="accessibility-panel" aria-label="Accessibility tools">
+    <div className="accessibility-panel-header"><div><span className="section-label">READING SUPPORT</span><h2>Accessibility tools</h2></div><button className="panel-close" type="button" onClick={onClose} aria-label="Close accessibility tools">×</button></div>
+    <section><div className="accessibility-section-heading"><h3>Color adjustment</h3><span aria-hidden="true">−</span></div><div className="accessibility-grid">{controls.map(([key, label, description]) => <ToggleControl key={key} label={label} description={description} checked={settings[key]} onChange={() => updateSettings({ [key]: !settings[key] })} />)}</div></section>
+    <section><div className="accessibility-section-heading"><h3>Text size & reading</h3><span aria-hidden="true">−</span></div><div className="accessibility-grid accessibility-grid-three"><ToggleControl label="Increase text" description="Make service text larger" checked={largeText} onChange={() => { setLargeText(!largeText); setSmallText(false) }} /><ToggleControl label="Decrease text" description="Make service text more compact" checked={smallText} onChange={() => { setSmallText(!smallText); setLargeText(false) }} /><button type="button" className="accessibility-tile" onClick={() => { setLargeText(false); setSmallText(false) }}><span aria-hidden="true">A</span><b>Reset text</b><small>Restore the default text size</small></button><ToggleControl label="Line height" description="Add more space between lines" checked={settings.lineHeight} onChange={() => updateSettings({ lineHeight: !settings.lineHeight })} /><ToggleControl label="Text spacing" description="Add more space between words" checked={settings.textSpacing} onChange={() => updateSettings({ textSpacing: !settings.textSpacing })} /></div></section>
+    <section><div className="accessibility-section-heading"><h3>Navigation adjustment</h3><span aria-hidden="true">−</span></div><div className="accessibility-grid accessibility-grid-three"><ToggleControl label="Big cursor" description="Increase pointer size" checked={settings.bigCursor} onChange={() => updateSettings({ bigCursor: !settings.bigCursor })} /><ToggleControl label="Hide images" description="Hide decorative images" checked={settings.hideImages} onChange={() => updateSettings({ hideImages: !settings.hideImages })} /><ToggleControl label="Reduce motion" description="Stop non-essential animation" checked={settings.reduceMotion} onChange={() => updateSettings({ reduceMotion: !settings.reduceMotion })} /><ToggleControl label="Keyboard focus" description="Show a stronger focus indicator" checked={settings.keyboardFocus} onChange={() => updateSettings({ keyboardFocus: !settings.keyboardFocus })} /><button type="button" className="accessibility-tile" onClick={readPage}><span aria-hidden="true">◌</span><b>Read aloud</b><small>Use browser speech support</small></button></div></section>
+    <button className="accessibility-reset" type="button" onClick={() => { setLargeText(false); setSmallText(false); updateSettings(defaultAccessibility) }}>Reset accessibility settings</button>
+  </aside>
+}
+
+function ToggleControl({ label, description, checked, onChange }: { label: string; description: string; checked: boolean; onChange: () => void }) {
+  return <button type="button" className={`accessibility-tile${checked ? ' selected' : ''}`} aria-pressed={checked} onClick={onChange}><span aria-hidden="true">{checked ? '✓' : '◐'}</span><b>{label}</b><small>{description}</small></button>
+}
+
+const uiCopy: Record<Locale, {
+  header: {
+    tagline: string
+    brandAria: string
+    language: string
+    how: string
+    accessibility: string
+    openMenu: string
+    closeMenu: string
+    nav: Record<'overview' | 'location' | 'capital' | 'business' | 'market' | 'finance' | 'report', string>
+  }
+  landing: {
+    label: string
+    title: string
+    text: string
+    start: string
+    proof: string[]
+    aboutTitle: string
+    aboutText: string
+    cards: Array<{ title: string; text: string }>
+  }
+  banner: Array<{ eyebrow: string; title: string; text: string }>
+  trust: Array<{ title: string; text: string }>
+  footer: { advisory: string; sources: string; note: string }
+}> = {
+  en: {
+    header: { tagline: 'Independent enterprise decision support', brandAria: 'Go to SmartNivesh overview', language: 'Choose language', how: 'How it works', accessibility: 'Accessibility', openMenu: 'Open navigation menu', closeMenu: 'Close navigation menu', nav: { overview: 'Overview', location: 'Location', capital: 'Capital', business: 'Business', market: 'Market analysis', finance: 'Finance', report: 'Full report' } },
+    landing: { label: 'RURAL ENTERPRISE DECISION SUPPORT', title: 'Understand your local market. Plan your finances. Start with confidence.', text: 'Assess your local market, understand project finance, and review indicative public schemes through one guided service.', start: 'Start business assessment', proof: ['Location', 'Business', 'Capital', 'Feasibility and finance'], aboutTitle: 'What is this?', aboutText: 'SmartNivesh is a guided decision-support service for rural entrepreneurs. It combines location context, category evidence, finance planning, repayment readiness, and AI explanations into one practical assessment you can review before investing or applying.', cards: [{ title: 'Local market', text: 'Understand nearby demand and mapped supply signals.' }, { title: 'Business feasibility', text: 'Review evidence, limitations, risks, and opportunities.' }, { title: 'Finance planning', text: 'Estimate margin, project cost, repayment comfort, and scheme routes.' }, { title: 'AI insights', text: 'Ask questions about the report in your selected language.' }] },
+    banner: [{ eyebrow: 'LOCAL MARKET', title: 'See the opportunity around you', text: 'Use mapped and verified Census context to make a grounded start.' }, { eyebrow: 'COMPETITOR MAPPING', title: 'Watch your local competition', text: 'Compare location, business category, and mapped evidence before you decide.' }, { eyebrow: 'SMART FEASIBILITY', title: 'Smart business feasibility report', text: 'Review risk calculation, loan planning, government schemes, and AI-powered analysis.' }],
+    trust: [{ title: 'Local market assessment', text: 'Based on the area you select' }, { title: 'Business feasibility', text: 'Evidence and limitations shown' }, { title: 'Finance planning', text: 'Caps and contribution included' }],
+    footer: { advisory: 'Rural Enterprise Advisory', sources: 'Official sources', note: 'This is an independent decision-support tool and does not represent a government authority. Final scheme eligibility and sanction are determined by the implementing authority.' },
+  },
+  hi: {
+    header: { tagline: 'स्वतंत्र उद्यम निर्णय सहायता', brandAria: 'SmartNivesh ओवरव्यू पर जाएं', language: 'भाषा चुनें', how: 'कैसे काम करता है', accessibility: 'सुगम्यता', openMenu: 'नेविगेशन मेनू खोलें', closeMenu: 'नेविगेशन मेनू बंद करें', nav: { overview: 'ओवरव्यू', location: 'स्थान', capital: 'पूंजी', business: 'व्यवसाय', market: 'बाज़ार विश्लेषण', finance: 'वित्त', report: 'पूरी रिपोर्ट' } },
+    landing: { label: 'ग्रामीण उद्यम निर्णय सहायता', title: 'अपने स्थानीय बाज़ार को समझें। अपने वित्त की योजना बनाएं। विश्वास के साथ शुरू करें।', text: 'एक निर्देशित सेवा में स्थानीय बाज़ार, परियोजना वित्त और सार्वजनिक योजनाओं की जानकारी पाएं।', start: 'व्यवसाय आकलन शुरू करें', proof: ['स्थान', 'व्यवसाय', 'पूंजी', 'व्यवहार्यता और वित्त'], aboutTitle: 'यह क्या है?', aboutText: 'SmartNivesh ग्रामीण उद्यमियों के लिए एक निर्देशित निर्णय-सहायता सेवा है। यह स्थान, व्यवसाय श्रेणी, वित्त योजना, पुनर्भुगतान तैयारी और एआई स्पष्टीकरण को एक व्यावहारिक आकलन में जोड़ती है।', cards: [{ title: 'स्थानीय बाज़ार', text: 'पास की मांग और मैप किए गए आपूर्ति संकेत समझें।' }, { title: 'व्यवसाय व्यवहार्यता', text: 'साक्ष्य, सीमाएं, जोखिम और अवसर देखें।' }, { title: 'वित्तीय योजना', text: 'मार्जिन, परियोजना लागत, पुनर्भुगतान सुविधा और योजना मार्ग समझें।' }, { title: 'एआई जानकारी', text: 'चुनी गई भाषा में रिपोर्ट से जुड़े प्रश्न पूछें।' }] },
+    banner: [{ eyebrow: 'स्थानीय बाज़ार', title: 'अपने आसपास का अवसर देखें', text: 'सत्यापित जनगणना संदर्भ और मैप किए गए संकेतों से मजबूत शुरुआत करें।' }, { eyebrow: 'प्रतिस्पर्धी मैपिंग', title: 'स्थानीय प्रतिस्पर्धा पर नज़र रखें', text: 'निर्णय से पहले स्थान, श्रेणी और मैप किए गए साक्ष्य की तुलना करें।' }, { eyebrow: 'स्मार्ट व्यवहार्यता', title: 'स्मार्ट व्यवसाय व्यवहार्यता रिपोर्ट', text: 'जोखिम, ऋण योजना, सरकारी योजनाएं और एआई विश्लेषण देखें।' }],
+    trust: [{ title: 'स्थानीय बाज़ार आकलन', text: 'आपके चुने हुए क्षेत्र पर आधारित' }, { title: 'व्यवसाय व्यवहार्यता', text: 'साक्ष्य और सीमाएं स्पष्ट' }, { title: 'वित्तीय योजना', text: 'सीमा और योगदान शामिल' }],
+    footer: { advisory: 'ग्रामीण उद्यम सलाह', sources: 'आधिकारिक स्रोत', note: 'यह एक स्वतंत्र निर्णय-सहायता उपकरण है और सरकारी प्राधिकरण का प्रतिनिधित्व नहीं करता। अंतिम योजना पात्रता और स्वीकृति संबंधित कार्यान्वयन प्राधिकरण तय करता है।' },
+  },
+  bn: {
+    header: { tagline: 'স্বাধীন উদ্যোগ সিদ্ধান্ত সহায়তা', brandAria: 'SmartNivesh ওভারভিউতে যান', language: 'ভাষা নির্বাচন করুন', how: 'কীভাবে কাজ করে', accessibility: 'অ্যাক্সেসিবিলিটি', openMenu: 'নেভিগেশন মেনু খুলুন', closeMenu: 'নেভিগেশন মেনু বন্ধ করুন', nav: { overview: 'ওভারভিউ', location: 'অবস্থান', capital: 'মূলধন', business: 'ব্যবসা', market: 'বাজার বিশ্লেষণ', finance: 'অর্থায়ন', report: 'পূর্ণ রিপোর্ট' } },
+    landing: { label: 'গ্রামীণ উদ্যোগ সিদ্ধান্ত সহায়তা', title: 'স্থানীয় বাজার বুঝুন। অর্থ পরিকল্পনা করুন। আত্মবিশ্বাসের সঙ্গে শুরু করুন।', text: 'একটি নির্দেশিত পরিষেবায় স্থানীয় বাজার, প্রকল্প অর্থায়ন এবং সরকারি প্রকল্প দেখুন।', start: 'ব্যবসা মূল্যায়ন শুরু করুন', proof: ['অবস্থান', 'ব্যবসা', 'মূলধন', 'সম্ভাব্যতা ও অর্থায়ন'], aboutTitle: 'এটি কী?', aboutText: 'SmartNivesh গ্রামীণ উদ্যোক্তাদের জন্য একটি নির্দেশিত সিদ্ধান্ত-সহায়তা পরিষেবা। এটি অবস্থান, ব্যবসা বিভাগ, অর্থ পরিকল্পনা, পরিশোধ প্রস্তুতি এবং AI ব্যাখ্যাকে এক মূল্যায়নে আনে।', cards: [{ title: 'স্থানীয় বাজার', text: 'কাছাকাছি চাহিদা ও সরবরাহের সংকেত বুঝুন।' }, { title: 'ব্যবসার সম্ভাব্যতা', text: 'প্রমাণ, সীমাবদ্ধতা, ঝুঁকি ও সুযোগ দেখুন।' }, { title: 'অর্থ পরিকল্পনা', text: 'মার্জিন, প্রকল্প খরচ ও পরিশোধ স্বাচ্ছন্দ্য বুঝুন।' }, { title: 'AI অন্তর্দৃষ্টি', text: 'নির্বাচিত ভাষায় রিপোর্ট সম্পর্কে প্রশ্ন করুন।' }] },
+    banner: [{ eyebrow: 'স্থানীয় বাজার', title: 'আপনার চারপাশের সুযোগ দেখুন', text: 'যাচাইকৃত Census প্রসঙ্গ ও ম্যাপ করা সংকেত ব্যবহার করুন।' }, { eyebrow: 'প্রতিযোগী ম্যাপিং', title: 'স্থানীয় প্রতিযোগিতা দেখুন', text: 'সিদ্ধান্তের আগে অবস্থান, বিভাগ ও ম্যাপ করা প্রমাণ তুলনা করুন।' }, { eyebrow: 'স্মার্ট সম্ভাব্যতা', title: 'স্মার্ট ব্যবসা সম্ভাব্যতা রিপোর্ট', text: 'ঝুঁকি, ঋণ পরিকল্পনা, সরকারি প্রকল্প ও AI বিশ্লেষণ দেখুন।' }],
+    trust: [{ title: 'স্থানীয় বাজার মূল্যায়ন', text: 'আপনার নির্বাচিত এলাকার ভিত্তিতে' }, { title: 'ব্যবসার সম্ভাব্যতা', text: 'প্রমাণ ও সীমাবদ্ধতা দেখানো হয়' }, { title: 'অর্থ পরিকল্পনা', text: 'সীমা ও অবদান অন্তর্ভুক্ত' }],
+    footer: { advisory: 'গ্রামীণ উদ্যোগ পরামর্শ', sources: 'সরকারি সূত্র', note: 'এটি একটি স্বাধীন সিদ্ধান্ত-সহায়তা টুল এবং সরকারি কর্তৃপক্ষের প্রতিনিধিত্ব করে না। চূড়ান্ত যোগ্যতা ও অনুমোদন সংশ্লিষ্ট কর্তৃপক্ষ নির্ধারণ করে।' },
+  },
+  mr: {
+    header: { tagline: 'स्वतंत्र उद्यम निर्णय सहाय्य', brandAria: 'SmartNivesh ओव्हरव्ह्यूवर जा', language: 'भाषा निवडा', how: 'कसे काम करते', accessibility: 'सुलभता', openMenu: 'नेव्हिगेशन मेनू उघडा', closeMenu: 'नेव्हिगेशन मेनू बंद करा', nav: { overview: 'आढावा', location: 'स्थान', capital: 'भांडवल', business: 'व्यवसाय', market: 'बाजार विश्लेषण', finance: 'वित्त', report: 'पूर्ण अहवाल' } },
+    landing: { label: 'ग्रामीण उद्यम निर्णय सहाय्य', title: 'स्थानिक बाजार समजा. वित्ताचे नियोजन करा. आत्मविश्वासाने सुरुवात करा.', text: 'एका मार्गदर्शित सेवेत स्थानिक बाजार, प्रकल्प वित्त आणि सार्वजनिक योजना समजा.', start: 'व्यवसाय मूल्यांकन सुरू करा', proof: ['स्थान', 'व्यवसाय', 'भांडवल', 'व्यवहार्यता आणि वित्त'], aboutTitle: 'हे काय आहे?', aboutText: 'SmartNivesh ही ग्रामीण उद्योजकांसाठी मार्गदर्शित निर्णय-सहाय्य सेवा आहे. ती स्थान, व्यवसाय श्रेणी, वित्त नियोजन, परतफेड तयारी आणि AI स्पष्टीकरण एका मूल्यांकनात आणते.', cards: [{ title: 'स्थानिक बाजार', text: 'जवळची मागणी आणि पुरवठा संकेत समजा.' }, { title: 'व्यवसाय व्यवहार्यता', text: 'पुरावे, मर्यादा, धोके आणि संधी पहा.' }, { title: 'वित्त नियोजन', text: 'मार्जिन, प्रकल्प खर्च आणि परतफेड क्षमता समजा.' }, { title: 'AI अंतर्दृष्टी', text: 'निवडलेल्या भाषेत अहवालाविषयी प्रश्न विचारा.' }] },
+    banner: [{ eyebrow: 'स्थानिक बाजार', title: 'आपल्या आसपासची संधी पहा', text: 'सत्यापित Census संदर्भ आणि मॅप केलेले संकेत वापरा.' }, { eyebrow: 'स्पर्धक मॅपिंग', title: 'स्थानिक स्पर्धा पहा', text: 'निर्णयापूर्वी स्थान, श्रेणी आणि पुरावे तुलना करा.' }, { eyebrow: 'स्मार्ट व्यवहार्यता', title: 'स्मार्ट व्यवसाय व्यवहार्यता अहवाल', text: 'जोखीम, कर्ज नियोजन, सरकारी योजना आणि AI विश्लेषण पहा.' }],
+    trust: [{ title: 'स्थानिक बाजार मूल्यांकन', text: 'निवडलेल्या क्षेत्रावर आधारित' }, { title: 'व्यवसाय व्यवहार्यता', text: 'पुरावे आणि मर्यादा दाखवल्या जातात' }, { title: 'वित्त नियोजन', text: 'मर्यादा आणि योगदान समाविष्ट' }],
+    footer: { advisory: 'ग्रामीण उद्यम सल्ला', sources: 'अधिकृत स्रोत', note: 'हे स्वतंत्र निर्णय-सहाय्य साधन आहे आणि सरकारी प्राधिकरणाचे प्रतिनिधित्व करत नाही. अंतिम पात्रता आणि मंजुरी संबंधित प्राधिकरण ठरवते.' },
+  },
+  ta: {
+    header: { tagline: 'சுயாதீன தொழில் முடிவு ஆதரவு', brandAria: 'SmartNivesh மேலோட்டத்திற்கு செல்லவும்', language: 'மொழியைத் தேர்ந்தெடுக்கவும்', how: 'இது எப்படி வேலை செய்கிறது', accessibility: 'அணுகல்தன்மை', openMenu: 'வழிசெலுத்தல் மெனுவைத் திறக்கவும்', closeMenu: 'வழிசெலுத்தல் மெனுவை மூடவும்', nav: { overview: 'மேலோட்டம்', location: 'இடம்', capital: 'மூலதனம்', business: 'வணிகம்', market: 'சந்தை பகுப்பாய்வு', finance: 'நிதி', report: 'முழு அறிக்கை' } },
+    landing: { label: 'கிராமப்புற தொழில் முடிவு ஆதரவு', title: 'உங்கள் உள்ளூர் சந்தையைப் புரிந்து கொள்ளுங்கள். நிதியைத் திட்டமிடுங்கள். நம்பிக்கையுடன் தொடங்குங்கள்.', text: 'ஒரே வழிகாட்டும் சேவையில் சந்தை, திட்ட நிதி மற்றும் பொதுத் திட்டங்களைப் பாருங்கள்.', start: 'வணிக மதிப்பீட்டைத் தொடங்குங்கள்', proof: ['இடம்', 'வணிகம்', 'மூலதனம்', 'சாத்தியம் மற்றும் நிதி'], aboutTitle: 'இது என்ன?', aboutText: 'SmartNivesh கிராமப்புற தொழில்முனைவோருக்கான வழிகாட்டும் முடிவு-ஆதரவு சேவை. இது இடம், வணிக வகை, நிதி திட்டம், திருப்பிச் செலுத்தும் தயார் நிலை மற்றும் AI விளக்கங்களை ஒரே மதிப்பீட்டில் சேர்க்கிறது.', cards: [{ title: 'உள்ளூர் சந்தை', text: 'அருகிலுள்ள தேவை மற்றும் வழங்கல் சைகைகளைப் புரிந்துகொள்ளுங்கள்.' }, { title: 'வணிக சாத்தியம்', text: 'ஆதாரம், வரம்புகள், அபாயங்கள் மற்றும் வாய்ப்புகள் பார்க்கவும்.' }, { title: 'நிதி திட்டம்', text: 'மார்ஜின், திட்ட செலவு மற்றும் திருப்பிச் செலுத்தும் வசதி புரிந்துகொள்ளுங்கள்.' }, { title: 'AI விளக்கங்கள்', text: 'தேர்ந்தெடுத்த மொழியில் அறிக்கை பற்றி கேளுங்கள்.' }] },
+    banner: [{ eyebrow: 'உள்ளூர் சந்தை', title: 'உங்களைச் சுற்றியுள்ள வாய்ப்பைப் பாருங்கள்', text: 'சரிபார்க்கப்பட்ட Census சூழல் மற்றும் வரைபட சைகைகளைப் பயன்படுத்துங்கள்.' }, { eyebrow: 'போட்டி வரைபடம்', title: 'உள்ளூர் போட்டியைப் பாருங்கள்', text: 'முடிவிற்கு முன் இடம், வகை மற்றும் ஆதாரங்களை ஒப்பிடுங்கள்.' }, { eyebrow: 'ஸ்மார்ட் சாத்தியம்', title: 'ஸ்மார்ட் வணிக சாத்திய அறிக்கை', text: 'அபாயம், கடன் திட்டம், அரசு திட்டங்கள் மற்றும் AI பகுப்பாய்வைப் பாருங்கள்.' }],
+    trust: [{ title: 'உள்ளூர் சந்தை மதிப்பீடு', text: 'நீங்கள் தேர்ந்தெடுத்த பகுதியின் அடிப்படையில்' }, { title: 'வணிக சாத்தியம்', text: 'ஆதாரம் மற்றும் வரம்புகள் காட்டப்படும்' }, { title: 'நிதி திட்டம்', text: 'வரம்புகள் மற்றும் பங்களிப்பு சேர்க்கப்பட்டது' }],
+    footer: { advisory: 'கிராமப்புற தொழில் ஆலோசனை', sources: 'அதிகாரப்பூர்வ ஆதாரங்கள்', note: 'இது சுயாதீன முடிவு-ஆதரவு கருவி; அரசு அதிகாரத்தை பிரதிநிதித்துவப்படுத்தாது. இறுதி தகுதி மற்றும் அனுமதி சம்பந்தப்பட்ட அதிகாரத்தால் தீர்மானிக்கப்படும்.' },
+  },
+}
+
+function FeatureBanner({ locale }: { locale: Locale }) {
+  const copy = uiCopy[locale].banner
+  const slides = [
+    { image: bannerFinanceReadiness, ...copy[2] },
+    { image: bannerBusinessPlanning, ...copy[1] },
+    { image: bannerMarketConfidence, ...copy[0] },
+  ]
+  const [current, setCurrent] = useState(0)
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    const timer = window.setInterval(() => setCurrent((value) => (value + 1) % slides.length), 5500)
+    return () => window.clearInterval(timer)
+  }, [slides.length])
+  const slide = slides[current]
+  return <section className="feature-banner" aria-roledescription="carousel" aria-label="SmartNivesh service features"><div className="feature-banner-image" key={slide.image} style={{ backgroundImage: `url(${slide.image})` }} aria-hidden="true" /><div className="feature-banner-copy"><span>{slide.eyebrow}</span><h2>{slide.title}</h2><p>{slide.text}</p><div className="feature-banner-controls"><button type="button" onClick={() => setCurrent((current + slides.length - 1) % slides.length)} aria-label="Previous feature"><ChevronLeft size={18} /></button><div role="tablist" aria-label="Feature slides">{slides.map((item, index) => <button key={item.title} role="tab" aria-selected={current === index} aria-label={`Show feature ${index + 1}`} onClick={() => setCurrent(index)} />)}</div><button type="button" onClick={() => setCurrent((current + 1) % slides.length)} aria-label="Next feature"><ChevronRight size={18} /></button></div></div></section>
+}
+
+function StartScreen({ onStart, locale }: { onStart: () => void; locale: Locale }) {
+  const copy = uiCopy[locale].landing
+  return <main id="main-content"><FeatureBanner locale={locale} /><section className="start-hero overview-intro"><div className="hero-copy"><span className="section-label">{copy.label}</span><h1>{copy.title}</h1><p>{copy.text}</p><div className="hero-actions"><button className="primary-button" onClick={onStart}>{copy.start} <ArrowRight size={18} /></button></div><div className="hero-proof">{copy.proof.map((label, index) => <Fragment key={label}><span>{label}</span><b>{index + 1}</b></Fragment>)}</div></div></section><section className="about-platform" aria-labelledby="about-platform-title"><div><span className="section-label">{copy.aboutTitle}</span><h2 id="about-platform-title">{copy.aboutTitle}</h2><p>{copy.aboutText}</p></div><div className="about-grid">{copy.cards.map((card, index) => <article key={card.title}><span>{index === 0 ? <MapPin size={18} /> : index === 1 ? <BarChart3 size={18} /> : index === 2 ? <IndianRupee size={18} /> : <Info size={18} />}</span><strong>{card.title}</strong><p>{card.text}</p></article>)}</div></section><section className="trust-row">{uiCopy[locale].trust.map((item, index) => <article key={item.title}>{index === 0 ? <MapPin /> : index === 1 ? <BarChart3 /> : <IndianRupee />}<div><strong>{item.title}</strong><span>{item.text}</span></div></article>)}</section><Disclaimer locale={locale} /></main>
+}
+
+function Footer({ locale }: { locale: Locale }) {
+  const copy = uiCopy[locale].footer
+  return <footer className="site-footer"><div><strong>SmartNivesh</strong><span>{copy.advisory}</span></div><nav className="footer-sources" aria-label="Official data and scheme sources"><strong>{copy.sources}</strong><div><a href="https://udyamregistration.gov.in/" target="_blank" rel="noreferrer">MSME Udyam Registration</a><a href="https://msme.gov.in/" target="_blank" rel="noreferrer">Ministry of MSME</a><a href="https://www.data.gov.in/" target="_blank" rel="noreferrer">Open Government Data</a><a href="https://censusindia.gov.in/" target="_blank" rel="noreferrer">Census of India</a><a href="https://kviconline.gov.in/pmegpeportal/" target="_blank" rel="noreferrer">PMEGP portal</a><a href="https://www.mudra.org.in/" target="_blank" rel="noreferrer">Pradhan Mantri MUDRA Yojana</a></div></nav><p>{copy.note}</p></footer>
 }
 
 function JourneyMap({ current }: { current: number }) {
@@ -352,7 +564,7 @@ function CapitalStructurePanel({ assessment }: { assessment?: FinancialRoadmap['
 }
 
 function BusinessStep({ categoryId, setCategoryId, referencePrice, setReferencePrice }: { categoryId: string; setCategoryId: (v: string) => void; referencePrice: number; setReferencePrice: (v: number) => void }) {
-  return <div className="step-content"><StepIntro number="03" title="Choose your business category" text="Select the closest supported category. Every category has a configured OpenStreetMap mapping rule for live competitor evidence." /><div className="category-grid" role="radiogroup" aria-label="Business category">{categories.map((category) => <label key={category.id} className={categoryId === category.id ? 'category-card selected' : 'category-card'}><input type="radio" name="category" value={category.id} checked={categoryId === category.id} onChange={() => setCategoryId(category.id)} /><span className="category-icon" aria-hidden="true">{category.icon}</span><strong>{category.name}</strong><small>{category.group}</small><span className="radio-mark">{categoryId === category.id && <Check size={14} />}</span></label>)}</div><section className="reference-price-panel"><div><Badge kind="USER INPUT" /><h3>Optional comparable reference price</h3><p>Enter your current menu/list price, a supplier quotation, or another comparable price per sale or unit. The calculator applies the verified rural-MPCE multiplier; it does not call a market-price API or invent a category price.</p></div><label className="form-field" htmlFor="reference-price"><span>Reference price <small>Optional · ₹ per sale / unit</small></span><div className="compact-currency"><b>₹</b><input id="reference-price" type="number" min="1" step="0.01" inputMode="decimal" value={referencePrice || ''} onChange={(event) => setReferencePrice(Math.max(0, Number(event.target.value) || 0))} placeholder="e.g. 100" /></div></label></section><div className="info-callout"><Info size={17} /><p>These micro-enterprise categories use documented OpenStreetMap tags for competitor mapping. Results show observed mapped features, never an assumed competitor count.</p></div></div>
+  return <div className="step-content"><StepIntro number="03" title="Choose your business category" text="Select the closest supported category. Every category has a configured OpenStreetMap mapping rule for live competitor evidence." /><div className="category-grid" role="radiogroup" aria-label="Business category">{categories.map((category) => <label key={category.id} data-theme={category.theme} className={categoryId === category.id ? 'category-card selected' : 'category-card'}><input type="radio" name="category" value={category.id} checked={categoryId === category.id} onChange={() => setCategoryId(category.id)} /><span className="category-icon" aria-hidden="true">{category.icon}</span><strong>{category.name}</strong><small>{category.group}</small><span className="radio-mark">{categoryId === category.id && <Check size={14} />}</span></label>)}</div><section className="reference-price-panel"><div><Badge kind="USER INPUT" /><h3>Optional comparable reference price</h3><p>Enter your current menu/list price, a supplier quotation, or another comparable price per sale or unit. The calculator applies the verified rural-MPCE multiplier; it does not call a market-price API or invent a category price.</p></div><label className="form-field" htmlFor="reference-price"><span>Reference price <small>Optional · ₹ per sale / unit</small></span><div className="compact-currency"><b>₹</b><input id="reference-price" type="number" min="1" step="0.01" inputMode="decimal" value={referencePrice || ''} onChange={(event) => setReferencePrice(Math.max(0, Number(event.target.value) || 0))} placeholder="e.g. 100" /></div></label></section><div className="info-callout"><Info size={17} /><p>These micro-enterprise categories use documented OpenStreetMap tags for competitor mapping. Results show observed mapped features, never an assumed competitor count.</p></div></div>
 }
 
 function AnalysisStep({ loading, error, result, demographics, marketValue, blockName, radius, onRadiusChange, onRetry }: { loading: boolean; error: string; result: CompetitorMapping | null; demographics: LocalDemographics | null; marketValue: ProductMarketValue | null; blockName?: string; radius: number; onRadiusChange: (value: number) => void; onRetry: () => void }) {
@@ -374,7 +586,40 @@ function VisualDataPanel({ competitors, demographics, marketValue, radius }: { c
     { label: 'Within 5 km', value: supply?.within_5km, width: supply ? (supply.within_5km / maxSupply) * 100 : 0 },
     { label: 'Within 10 km', value: supply?.within_10km, width: supply ? (supply.within_10km / maxSupply) * 100 : 0 },
   ]
-  return <section className="visual-data-panel" aria-label="Visual evidence overview"><div className="visual-data-heading"><div><span className="section-label">EVIDENCE AT A GLANCE</span><h3>What the available data is saying</h3><p>Supply is shown as mapped businesses. Population stays at its verified Census scope; it is not a radius estimate.</p></div><Badge kind={competitors?.status === 'AVAILABLE' ? 'PUBLIC DATA' : 'VERIFICATION REQUIRED'} /></div><div className="visual-data-grid"><div className="supply-chart"><div className="chart-title"><span>Mapped similar businesses</span><strong>{competitors?.mapped_competitor_count ?? '—'}</strong></div>{bars.map((bar) => <div className="data-bar-row" key={bar.label}><span>{bar.label}</span><div className="data-bar-track"><i style={{ width: `${Math.max(bar.width, supply && bar.value ? 8 : 0)}%` }} /></div><b>{bar.value ?? '—'}</b></div>)}<small>Search radius selected: {radius} km</small></div><div className="signal-stack"><article><span>Rural affordability position</span><strong>{affordability != null ? `${affordability}%` : 'Unavailable'}</strong><div className="signal-meter"><i style={{ width: `${Math.min(100, Math.max(0, affordability ?? 0))}%` }} /></div><small>State rural MPCE compared with the all-India rural baseline</small></article><article><span>Verified population baseline</span><strong>{populationLabel}</strong><small>{demographics?.status === 'AVAILABLE' || competitors?.demographics?.total_population ? 'Census 2011 sub-district residents' : 'No verified demographic record yet'}</small></article></div></div></section>
+  return <><GeospatialEvidenceMap competitors={competitors} demographics={demographics} radius={radius} /><section className="visual-data-panel" aria-label="Visual evidence overview"><div className="visual-data-heading"><div><span className="section-label">EVIDENCE AT A GLANCE</span><h3>What the available data is saying</h3><p>Supply is shown as mapped businesses. Population stays at its verified Census scope; it is not a radius estimate.</p></div><Badge kind={competitors?.status === 'AVAILABLE' ? 'PUBLIC DATA' : 'VERIFICATION REQUIRED'} /></div><div className="visual-data-grid"><div className="supply-chart"><div className="chart-title"><span>Mapped similar businesses</span><strong>{competitors?.mapped_competitor_count ?? '—'}</strong></div>{bars.map((bar) => <div className="data-bar-row" key={bar.label}><span>{bar.label}</span><div className="data-bar-track"><i style={{ width: `${Math.max(bar.width, supply && bar.value ? 8 : 0)}%` }} /></div><b>{bar.value ?? '—'}</b></div>)}<small>Search radius selected: {radius} km</small></div><div className="signal-stack"><article><span>Rural affordability position</span><strong>{affordability != null ? `${affordability}%` : 'Unavailable'}</strong><div className="signal-meter"><i style={{ width: `${Math.min(100, Math.max(0, affordability ?? 0))}%` }} /></div><small>State rural MPCE compared with the all-India rural baseline</small></article><article><span>Verified population baseline</span><strong>{populationLabel}</strong><small>{demographics?.status === 'AVAILABLE' || competitors?.demographics?.total_population ? 'Census 2011 sub-district residents' : 'No verified demographic record yet'}</small></article></div></div></section></>
+}
+
+function GeospatialEvidenceMap({ competitors, demographics, radius }: { competitors: CompetitorMapping | null; demographics: LocalDemographics | null; radius: number }) {
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [mapRadius, setMapRadius] = useState(radius)
+  const point = competitors?.analysis_point
+  if (!point) return <section className="geo-map-empty" data-pdf-exclude="true"><MapPin size={28} /><div><strong>Geographic view unavailable</strong><p>A verified analysis coordinate is required before map tiles and business markers can be shown.</p></div></section>
+  const zoom = mapRadius <= 2 ? 14 : mapRadius <= 5 ? 13 : 12
+  const world = (latitude: number, longitude: number) => {
+    const scale = 256 * 2 ** zoom
+    const sin = Math.sin(latitude * Math.PI / 180)
+    return { x: (longitude + 180) / 360 * scale, y: (0.5 - Math.log((1 + sin) / (1 - sin)) / (4 * Math.PI)) * scale }
+  }
+  const center = world(point.latitude, point.longitude)
+  const centerTileX = Math.floor(center.x / 256)
+  const centerTileY = Math.floor(center.y / 256)
+  const tiles = [] as Array<{ x: number; y: number; left: number; top: number }>
+  for (let dy = -2; dy <= 2; dy += 1) for (let dx = -3; dx <= 3; dx += 1) {
+    const x = centerTileX + dx; const y = centerTileY + dy
+    tiles.push({ x, y, left: 50 + ((x * 256 - center.x) / 1024) * 100, top: 50 + ((y * 256 - center.y) / 512) * 100 })
+  }
+  const visible = (competitors?.mapped_competitors ?? [])
+    .filter((item) => item.latitude != null && item.longitude != null && (item.distance_km == null || item.distance_km <= mapRadius))
+    .map((item, index) => ({
+      ...item,
+      osm_id: item.osm_id || item.source_feature_id || `${item.provider || 'mapped'}-${item.latitude}-${item.longitude}-${index}`,
+    }))
+  const markerPosition = (latitude: number, longitude: number) => { const p = world(latitude, longitude); return { left: `${50 + ((p.x - center.x) / 1024) * 100}%`, top: `${50 + ((p.y - center.y) / 512) * 100}%` } }
+  const metresPerPixel = 156543.03392 * Math.cos(point.latitude * Math.PI / 180) / 2 ** zoom
+  const radiusPixels = Math.min(430, mapRadius * 1000 / metresPerPixel)
+  const selected = visible.find((item) => item.osm_id === selectedId)
+  const population = competitors?.demographics?.total_population ?? demographics?.total_population
+  return <section className="geo-evidence" data-pdf-exclude="true" aria-labelledby="geo-evidence-title"><div className="geo-map-heading"><div><span className="section-label">GEOGRAPHIC EVIDENCE</span><h3 id="geo-evidence-title"><MapPin size={21} /> Active Business Intelligence Map</h3><p>{competitors.block_name} · Actual mapped coordinates from the completed lookup</p></div><div className="catchment-tabs" aria-label={`Current catchment ${mapRadius} kilometres`}><span>Catchment</span>{[2, 5, 10].map((value) => <button type="button" key={value} className={mapRadius === value ? 'active' : ''} aria-pressed={mapRadius === value} onClick={() => { setMapRadius(value); setSelectedId(null) }}>{value} km</button>)}</div></div><div className="geo-map" role="region" aria-label={`Map centred on the proposed business point with ${visible.length} mapped competitor markers inside ${mapRadius} kilometres`}><div className="map-tiles" aria-hidden="true">{tiles.map((tile) => <img key={`${tile.x}-${tile.y}`} src={`https://tile.openstreetmap.org/${zoom}/${tile.x}/${tile.y}.png`} alt="" draggable={false} style={{ left: `${tile.left}%`, top: `${tile.top}%` }} />)}</div><div className="catchment-ring" aria-hidden="true" style={{ width: `${radiusPixels / 512 * 100}%`, height: `${radiusPixels / 256 * 100}%` }} /><div className="map-legend"><strong>GIS MAP LAYERS</strong><span><i className="proposed" /> Proposed business point</span><span><i className="competitor" /> Mapped competitors</span><span><i className="catchment" /> {mapRadius} km catchment</span></div><button className="proposed-marker" type="button" style={{ left: '50%', top: '50%' }} aria-label="Proposed business analysis point"><Store size={21} /><b>Proposed business</b></button>{visible.map((item, index) => <button key={`${item.provider}-${item.osm_id}`} type="button" className={`competitor-marker${selectedId === item.osm_id ? ' selected' : ''}`} style={markerPosition(item.latitude!, item.longitude!)} onClick={() => setSelectedId(item.osm_id)} aria-label={`${item.name || `Mapped competitor ${index + 1}`}${item.distance_km != null ? `, ${item.distance_km.toFixed(1)} kilometres away` : ''}`}><span>{index + 1}</span></button>)}{selected && <article className="map-popover"><strong>{selected.name || 'Unnamed mapped business'}</strong><span>{selected.provider?.replace('_', ' ') || 'Mapped source'}{selected.distance_km != null ? ` · ${selected.distance_km.toFixed(1)} km` : ''}</span>{selected.latitude != null && selected.longitude != null && <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${selected.latitude},${selected.longitude}`)}`} target="_blank" rel="noreferrer">Open map <ExternalLink size={13} /></a>}</article>}<a className="osm-attribution" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a></div><div className="catchment-summary"><div><span>Catchment</span><strong>{mapRadius} km radius</strong></div><div><span>Mapped competitors</span><strong>{visible.length}</strong></div>{population != null && <div><span>Census population scope</span><strong>{population.toLocaleString('en-IN')}</strong></div>}<div><span>Data confidence</span><strong>{competitors?.confidence || 'Unknown'}</strong></div></div><p className="map-integrity-note"><Info size={14} /> Mapped records are observed provider data, not a complete register of formal or informal businesses. Map centre: {point.source}.</p></section>
 }
 
 function RiskAndOpportunityGuide({ competitors, demographics }: { competitors: CompetitorMapping | null; demographics: LocalDemographics | null }) {
@@ -411,7 +656,21 @@ function FinanceStep({ financial, intelligence, profile, loading, error, onProfi
 function FinancialIntelligencePanel({ result }: { result: FinancialIntelligence | null }) {
   if (!result) return <div className="info-callout"><Info size={17} /><p>The deterministic financial analysis is updating.</p></div>
   const complete = result.repayment_metrics?.status === 'CALCULATED'
-  return <section className="finance-input-panel"><div className="panel-heading"><div><Badge kind={complete ? 'CALCULATED' : 'VERIFICATION REQUIRED'} /><h3>Financial feasibility and scenarios</h3><p>Repayment Coverage, downside scenarios and financing recommendations use only the figures you enter.</p></div></div>{complete ? <><div className="financial-grid"><Metric label="Operating profit" value={formatINR(result.costs?.operating_profit ?? 0)} /><Metric label="Repayment Coverage" value={`${result.repayment_metrics?.repayment_coverage ?? 0}×`} note="Operating profit ÷ EMI; not formal DSCR" /><Metric label="Monthly cash after EMI" value={formatINR(result.repayment_metrics?.monthly_cash_surplus ?? 0)} /><Metric label="Working-capital requirement" value={result.working_capital?.requirement != null ? formatINR(result.working_capital.requirement) : 'Unknown'} /><Metric label="Financial feasibility" value={result.feasibility?.status ?? 'UNKNOWN'} /><Metric label="Recommended loan" value={result.recommendation?.recommended_loan != null ? formatINR(result.recommendation.recommended_loan) : 'Not recommended'} /></div><div className="scenario-grid">{result.scenario_results.map((scenario) => <article className="report-metric" key={scenario.name}><span>{scenario.name}</span><strong>{scenario.repayment_coverage != null ? `${scenario.repayment_coverage}× coverage` : 'Unknown'}</strong><small>{scenario.monthly_cash_after_emi != null ? `${formatINR(scenario.monthly_cash_after_emi)} after EMI` : 'Needs complete inputs'}</small></article>)}</div></> : <div className="info-callout"><Info size={17} /><p>Enter monthly revenue plus both fixed and variable costs to calculate repayment coverage, scenarios and recommended financing. Missing figures remain UNKNOWN.</p></div>}<details className="plain-details"><summary>Financial methodology and limitations</summary><ul>{[...result.assumptions, ...result.limitations].map((item) => <li key={item}>{item}</li>)}</ul></details></section>
+  return <section className="finance-input-panel"><div className="panel-heading"><div><Badge kind={complete ? 'CALCULATED' : 'VERIFICATION REQUIRED'} /><h3>Financial feasibility and scenarios</h3><p>Repayment Coverage, downside scenarios and financing recommendations use only the figures you enter.</p></div></div>{complete ? <><div className="financial-grid"><Metric label="Operating profit" value={formatINR(result.costs?.operating_profit ?? 0)} /><Metric label="Repayment Coverage" value={`${result.repayment_metrics?.repayment_coverage ?? 0}×`} note="Operating profit ÷ EMI; not formal DSCR" /><Metric label="Monthly cash after EMI" value={formatINR(result.repayment_metrics?.monthly_cash_surplus ?? 0)} /><Metric label="Working-capital requirement" value={result.working_capital?.requirement != null ? formatINR(result.working_capital.requirement) : 'Unknown'} /><Metric label="Financial feasibility" value={result.feasibility?.status ?? 'UNKNOWN'} /><Metric label="Recommended loan" value={result.recommendation?.recommended_loan != null ? formatINR(result.recommendation.recommended_loan) : 'Not recommended'} /></div><FinancialRiskDashboard result={result} /><div className="scenario-grid">{result.scenario_results.map((scenario) => <article className="report-metric" key={scenario.name}><span>{scenario.name}</span><strong>{scenario.repayment_coverage != null ? `${scenario.repayment_coverage}× coverage` : 'Unknown'}</strong><small>{scenario.monthly_cash_after_emi != null ? `${formatINR(scenario.monthly_cash_after_emi)} after EMI` : 'Needs complete inputs'}</small></article>)}</div></> : <div className="info-callout"><Info size={17} /><p>Enter monthly revenue plus both fixed and variable costs to calculate repayment coverage, scenarios and recommended financing. Missing figures remain UNKNOWN.</p></div>}<details className="plain-details"><summary>Financial methodology and limitations</summary><ul>{[...result.assumptions, ...result.limitations].map((item) => <li key={item}>{item}</li>)}</ul></details></section>
+}
+
+function FinancialRiskDashboard({ result }: { result: FinancialIntelligence }) {
+  const feasibility = result.feasibility
+  const level = feasibility?.status ?? 'UNKNOWN'
+  const downside = feasibility?.downside_status === 'POSITIVE' ? 'Cash remains positive' : feasibility?.downside_status === 'NEGATIVE' ? 'Cash turns negative' : 'Needs complete inputs'
+  const riskText = level === 'COMFORTABLE'
+    ? 'The current figures cover the illustrated repayment amount. Keep validating revenue, costs and local demand.'
+    : level === 'TIGHT'
+      ? 'The current plan has limited room for shocks. Reduce fixed costs, improve margin or lower the funding need before proceeding.'
+      : level === 'UNAFFORDABLE'
+        ? 'The entered cash flow does not comfortably support the illustrated repayment. Rework the operating plan before applying.'
+        : 'Add revenue plus fixed and variable costs to calculate this risk signal.'
+  return <section className="financial-risk-dashboard" aria-label="Financial risk readiness"><div className="risk-dashboard-gauge"><span className="section-label">RISK READINESS</span><h4>Repayment risk</h4><RiskGauge level={level} expanded /></div><div className="risk-dashboard-detail"><strong>{riskText}</strong><div className="risk-thread-list"><article><span>Base repayment coverage</span><b>{feasibility?.repayment_coverage != null ? `${feasibility.repayment_coverage}×` : 'Unknown'}</b><small>Operating profit ÷ illustrated EMI</small></article><article><span>Downside case</span><b>{downside}</b><small>{feasibility?.conservative_repayment_coverage != null ? `${feasibility.conservative_repayment_coverage}× conservative coverage` : 'Conservative scenario is not available'}</small></article><article><span>Cash after EMI</span><b>{feasibility?.monthly_cash_surplus != null ? formatINR(feasibility.monthly_cash_surplus) : 'Unknown'}</b><small>Based only on your entered revenue and costs</small></article></div></div></section>
 }
 
 function EnterpriseProfile({ profile, onChange }: { profile: FinanceProfile; onChange: (change: Partial<FinanceProfile>) => void }) {
@@ -442,7 +701,7 @@ function SchemeRouteBadge({ status }: { status: GovernmentSchemeRoute['status'] 
   return <span title={labels[status]}><Badge kind={mapping[status]} /></span>
 }
 
-function ReportPage({ locale, location, category, financial, financialIntelligence, competitors, demographics, marketValue, onRecalculate }: { locale: 'en' | 'hi'; location: string; category: string; financial: FinancialRoadmap | null; financialIntelligence: FinancialIntelligence | null; competitors: CompetitorMapping | null; demographics: LocalDemographics | null; marketValue: ProductMarketValue | null; onRecalculate: () => void }) {
+function ReportPage({ locale, location, category, financial, financialIntelligence, competitors, demographics, marketValue, onRecalculate }: { locale: Locale; location: string; category: string; financial: FinancialRoadmap | null; financialIntelligence: FinancialIntelligence | null; competitors: CompetitorMapping | null; demographics: LocalDemographics | null; marketValue: ProductMarketValue | null; onRecalculate: () => void }) {
   const assessment = financial?.assessment
   const cashflow = financial?.cashflow
   const financialFit = assessment?.status === 'VALID'
@@ -457,7 +716,7 @@ function ReportPage({ locale, location, category, financial, financialIntelligen
     <ReportSection title="Cash-flow and working-capital check" eyebrow="08 · USER-SUPPLIED BUSINESS PLAN">{cashflow?.status === 'AVAILABLE' ? <div className="financial-grid"><Metric label="Monthly operating cost" value={formatINR(cashflow.monthly_operating_cost ?? 0)} /><Metric label="Cash before debt" value={formatINR(cashflow.monthly_cash_before_debt ?? 0)} /><Metric label="Cash after baseline EMI" value={formatINR(cashflow.monthly_cash_after_baseline_instalment ?? 0)} /><Metric label="User-chosen cash reserve" value={formatINR(cashflow.operating_reserve_requirement ?? 0)} /></div> : <UnavailablePanel title="Operating affordability requires your actual figures" text={cashflow?.limitations.slice(1).join(' ') || 'Return to Finance and provide your own costs, expected revenue and reserve months. No default business cost is applied.'} />}</ReportSection>
     <ReportSection title="Financial feasibility scenarios" eyebrow="09 · DETERMINISTIC FINANCIAL INTELLIGENCE"><ScenarioComparisonChart result={financialIntelligence} /><FinancialIntelligencePanel result={financialIntelligence} /></ReportSection>
     <ReportSection title="Action plan" eyebrow="10 · APPLICATION READINESS"><ol className="action-list">{(financial?.readiness_actions ?? ['Collect current equipment, fit-out and supplier quotations.', 'Separate working capital from capital expenditure in a project report.', 'Verify scheme eligibility and apply only through the official government channel.']).map((item, i) => <li key={item}><span>{i + 1}</span>{item}</li>)}</ol></ReportSection>
-    <ReportSection title="Ask about this assessment" eyebrow="11 · EXPLANATIONS"><AssessmentAssistant locale={locale} context={{ location, business: category, demographics: demographics?.total_population ? { population_2011: demographics.total_population, households_2011: demographics.households } : 'UNKNOWN', competition: competitors ? { status: competitors.status, mapped_similar_businesses: competitors.mapped_competitor_count ?? 'UNKNOWN', radius_supply: competitors.radius_supply ?? 'UNKNOWN', limitations: competitors.limitations } : 'UNKNOWN', financial: financialIntelligence ? { feasibility: financialIntelligence.feasibility?.status, repayment_coverage: financialIntelligence.repayment_metrics?.repayment_coverage, recommended_loan: financialIntelligence.recommendation?.recommended_loan } : 'UNKNOWN', limitations: [...(competitors?.limitations ?? []), ...(demographics?.limitations ?? [])], next_actions: financial?.readiness_actions ?? [] }} /></ReportSection>
+    <ReportSection title="Ask about this assessment" eyebrow="11 · EXPLANATIONS" pdfExclude><AssessmentAssistant locale={locale} context={{ location, business: category, demographics: demographics?.total_population ? { population_2011: demographics.total_population, households_2011: demographics.households } : 'UNKNOWN', competition: competitors ? { status: competitors.status, mapped_similar_businesses: competitors.mapped_competitor_count ?? 'UNKNOWN', radius_supply: competitors.radius_supply ?? 'UNKNOWN', limitations: competitors.limitations } : 'UNKNOWN', financial: financialIntelligence ? { feasibility: financialIntelligence.feasibility?.status, repayment_coverage: financialIntelligence.repayment_metrics?.repayment_coverage, recommended_loan: financialIntelligence.recommendation?.recommended_loan } : 'UNKNOWN', limitations: [...(competitors?.limitations ?? []), ...(demographics?.limitations ?? [])], next_actions: financial?.readiness_actions ?? [] }} /></ReportSection>
     <MethodologyPanel competitors={competitors} marketValue={marketValue} financial={financial} />
   </main>
 }
@@ -473,7 +732,9 @@ function FinancialCompositionChart({ financial }: { financial: FinancialRoadmap 
     { label: 'Published-cap financing', value: financed, className: 'financed' },
     { label: 'Uncovered amount', value: gap, className: 'gap' },
   ].filter((item) => item.value > 0)
-  return <section className="composition-chart" aria-labelledby="composition-title"><div className="chart-heading"><div><span className="section-label">CAPITAL COMPOSITION</span><h3 id="composition-title">How the indicative project cost is funded</h3></div><Badge kind="CALCULATED" /></div><div className="composition-track" role="img" aria-label={parts.map((item) => `${item.label}: ${formatINR(item.value)}`).join('; ')}>{parts.map((item) => <i key={item.label} className={item.className} style={{ width: `${(item.value / projectCost) * 100}%` }} />)}</div><div className="composition-legend">{parts.map((item) => <div key={item.label}><i className={item.className} /><span>{item.label}</span><strong>{formatINR(item.value)}</strong><small>{Math.round((item.value / projectCost) * 100)}%</small></div>)}</div></section>
+  const ownPct = own / projectCost * 100
+  const financedPct = financed / projectCost * 100
+  return <section className="composition-chart" aria-labelledby="composition-title"><div className="chart-heading"><div><span className="section-label">CAPITAL COMPOSITION</span><h3 id="composition-title">How the indicative project cost is funded</h3></div><Badge kind="CALCULATED" /></div><div className="composition-visual"><div className="funding-donut" role="img" aria-label={parts.map((item) => `${item.label}: ${formatINR(item.value)}`).join('; ')} style={{ background: `conic-gradient(var(--navy) 0 ${ownPct}%, var(--green) ${ownPct}% ${ownPct + financedPct}%, var(--amber) ${ownPct + financedPct}% 100%)` }}><span><strong>{formatINR(projectCost)}</strong><small>Total project cost</small></span></div><div className="composition-detail"><div className="composition-track" aria-hidden="true">{parts.map((item) => <i key={item.label} className={item.className} style={{ width: `${(item.value / projectCost) * 100}%` }} />)}</div><div className="composition-legend">{parts.map((item) => <div key={item.label}><i className={item.className} /><span>{item.label}</span><strong>{formatINR(item.value)}</strong><small>{Math.round((item.value / projectCost) * 100)}%</small></div>)}</div></div></div></section>
 }
 
 function ScenarioComparisonChart({ result }: { result: FinancialIntelligence | null }) {
@@ -488,14 +749,18 @@ function ChartBar({ label, value, max, className }: { label: string; value?: num
   return <div className="chart-bar"><span>{label}</span><div><i className={className} style={{ width: `${width}%` }} /></div><b>{value == null ? 'Unavailable' : formatINR(value)}</b></div>
 }
 
-function AssessmentAssistant({ locale, context }: { locale: 'en' | 'hi'; context: Record<string, unknown> }) {
+function AssessmentAssistant({ locale, context }: { locale: Locale; context: Record<string, unknown> }) {
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState<AssessmentAssistantResponse | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const presets = locale === 'hi'
-    ? ['मेरे लिए सबसे महत्वपूर्ण जोखिम क्या है?', 'निवेश से पहले मुझे क्या जांचना चाहिए?', 'अगला सही कदम क्या है?']
-    : ['What is the most important risk for me?', 'What should I verify before investing?', 'What is my best next step?']
+  const assistantCopy = {
+    en: { intro: 'Ask in English about the evidence already shown in this report. The assistant cannot create new local facts or change financial calculations.', placeholder: 'Ask a question about this assessment', loading: 'Answering...', ask: 'Ask SmartNivesh', presets: ['What is the most important risk for me?', 'What should I verify before investing?', 'What is my best next step?'] },
+    hi: { intro: 'इस रिपोर्ट में दिखाए गए साक्ष्य के बारे में हिंदी में पूछें। सहायक नए स्थानीय तथ्य नहीं बना सकता और वित्तीय गणना नहीं बदल सकता।', placeholder: 'अपना प्रश्न लिखें', loading: 'उत्तर दे रहा है...', ask: 'SmartNivesh से पूछें', presets: ['मेरे लिए सबसे महत्वपूर्ण जोखिम क्या है?', 'निवेश से पहले मुझे क्या जांचना चाहिए?', 'अगला सही कदम क्या है?'] },
+    bn: { intro: 'এই রিপোর্টে দেখানো প্রমাণ সম্পর্কে বাংলায় প্রশ্ন করুন। সহায়ক নতুন স্থানীয় তথ্য তৈরি করতে বা আর্থিক হিসাব বদলাতে পারে না।', placeholder: 'এই মূল্যায়ন সম্পর্কে প্রশ্ন করুন', loading: 'উত্তর তৈরি হচ্ছে...', ask: 'SmartNivesh-কে জিজ্ঞাসা করুন', presets: ['আমার জন্য সবচেয়ে গুরুত্বপূর্ণ ঝুঁকি কী?', 'বিনিয়োগের আগে কী যাচাই করব?', 'আমার পরবর্তী সেরা পদক্ষেপ কী?'] },
+    mr: { intro: 'या अहवालात दाखवलेल्या पुराव्यांबद्दल मराठीत विचारा. सहाय्यक नवीन स्थानिक तथ्य तयार करू शकत नाही किंवा आर्थिक गणना बदलू शकत नाही.', placeholder: 'या मूल्यांकनाबद्दल प्रश्न विचारा', loading: 'उत्तर देत आहे...', ask: 'SmartNivesh ला विचारा', presets: ['माझ्यासाठी सर्वात महत्त्वाचा धोका कोणता?', 'गुंतवणुकीपूर्वी मी काय पडताळावे?', 'माझे पुढचे सर्वोत्तम पाऊल कोणते?'] },
+    ta: { intro: 'இந்த அறிக்கையில் காட்டப்பட்ட ஆதாரங்கள் பற்றி தமிழில் கேளுங்கள். உதவியாளர் புதிய உள்ளூர் தகவல் உருவாக்கவோ நிதி கணக்குகளை மாற்றவோ முடியாது.', placeholder: 'இந்த மதிப்பீடு பற்றி கேள்வி கேளுங்கள்', loading: 'பதில் வருகிறது...', ask: 'SmartNivesh-யிடம் கேளுங்கள்', presets: ['எனக்கு மிக முக்கியமான அபாயம் என்ன?', 'முதலீட்டுக்கு முன் என்ன சரிபார்க்க வேண்டும்?', 'எனது அடுத்த சிறந்த படி என்ன?'] },
+  }[locale]
   async function ask() {
     if (question.trim().length < 2) return
     setLoading(true); setError(''); setAnswer(null)
@@ -503,7 +768,7 @@ function AssessmentAssistant({ locale, context }: { locale: 'en' | 'hi'; context
     catch (err) { setError(err instanceof Error ? err.message : 'The explanation service is unavailable.') }
     finally { setLoading(false) }
   }
-  return <section className="assessment-assistant"><p>Ask in {locale === 'hi' ? 'Hindi or English' : 'English or Hindi'} about the evidence already shown in this report. The assistant cannot create new local facts or change financial calculations.</p><div className="assistant-presets">{presets.map((item) => <button type="button" className="secondary-button" key={item} onClick={() => setQuestion(item)}>{item}</button>)}</div><div className="assistant-compose"><textarea value={question} onChange={(event) => setQuestion(event.target.value)} placeholder={locale === 'hi' ? 'अपना प्रश्न लिखें' : 'Ask a question about this assessment'} maxLength={1000} /><button className="primary-button" type="button" onClick={() => void ask()} disabled={loading || question.trim().length < 2}>{loading ? 'Answering…' : 'Ask VyaparSathi'}</button></div>{error && <ErrorState message={error} />}{answer && <article className="assistant-answer"><Badge kind={answer.generated_by === 'gemini' ? 'CALCULATED' : 'VERIFICATION REQUIRED'} /><p>{answer.answer}</p><small>{answer.limitations.join(' ')}</small></article>}</section>
+  return <section className="assessment-assistant"><p>{assistantCopy.intro}</p><div className="assistant-presets">{assistantCopy.presets.map((item) => <button type="button" className="secondary-button" key={item} onClick={() => setQuestion(item)}>{item}</button>)}</div><div className="assistant-compose"><textarea value={question} onChange={(event) => setQuestion(event.target.value)} placeholder={assistantCopy.placeholder} maxLength={1000} /><button className="primary-button" type="button" onClick={() => void ask()} disabled={loading || question.trim().length < 2}>{loading ? assistantCopy.loading : assistantCopy.ask}</button></div>{error && <ErrorState message={error} />}{answer && <article className="assistant-answer"><Badge kind={answer.generated_by === 'gemini' ? 'CALCULATED' : 'VERIFICATION REQUIRED'} /><p>{answer.answer}</p><small>{answer.limitations.join(' ')}</small></article>}</section>
 }
 
 function FeasibilityEvidence({ competitors, demographics, marketValue }: { competitors: CompetitorMapping | null; demographics: LocalDemographics | null; marketValue: ProductMarketValue | null }) {
@@ -526,17 +791,33 @@ function SwotAndThreats({ competitors, marketValue }: { competitors: CompetitorM
   return <div className="two-column">{([['Strengths', strengths], ['Weaknesses', weaknesses], ['Opportunities', opportunities], ['Threats / risks', threats]] as const).map(([title, items]) => <article className="unavailable-panel" key={title}><Badge kind={title === 'Threats / risks' ? 'VERIFICATION REQUIRED' : 'PUBLIC DATA'} /><h3>{title}</h3><ul>{items.map(item => <li key={item}>{item}</li>)}</ul></article>)}</div>
 }
 
-function ReportSection({ title, eyebrow, children }: { title: string; eyebrow: string; children: React.ReactNode }) { return <section className="report-section"><div className="report-section-heading"><span>{eyebrow}</span><h2>{title}</h2></div>{children}</section> }
+function ReportSection({ title, eyebrow, children, pdfExclude = false }: { title: string; eyebrow: string; children: React.ReactNode; pdfExclude?: boolean }) { return <section className="report-section" data-pdf-exclude={pdfExclude || undefined}><div className="report-section-heading"><span>{eyebrow}</span><h2>{title}</h2></div>{children}</section> }
 function StepIntro({ number, title, text }: { number: string; title: string; text: string }) { return <header className="step-intro"><span>{number} / 05</span><h2>{title}</h2><p>{text}</p></header> }
 function CalculationCard({ label, value, badge, formula }: { label: string; value: string; badge: BadgeKind; formula?: string }) { return <article className="calculation-card"><Badge kind={badge} /><span>{label}</span><strong>{value}</strong>{formula && <small>{formula}</small>}</article> }
 function Metric({ label, value, note }: { label: string; value: string; note?: string }) {
+  if (label === 'Financial feasibility') return <article className="report-metric risk-metric"><div className="metric-label"><span>{label}</span></div><RiskGauge level={value} />{note && <small>{note}</small>}</article>
   return <article className="report-metric"><div className="metric-label"><span>{label}</span></div><strong>{value}</strong>{note && <small>{note}</small>}</article>
+}
+function RiskGauge({ level, expanded = false }: { level: string; expanded?: boolean }) {
+  const normalized = level.toUpperCase()
+  const angle = normalized === 'COMFORTABLE' ? -58 : normalized === 'TIGHT' ? 0 : normalized === 'UNAFFORDABLE' ? 58 : null
+  const label = normalized === 'COMFORTABLE' ? 'Lower financial risk' : normalized === 'TIGHT' ? 'Moderate financial risk' : normalized === 'UNAFFORDABLE' ? 'Higher financial risk' : 'Risk not scored'
+  return <div className={expanded ? 'risk-gauge expanded' : 'risk-gauge'} role="img" aria-label={`${label}; backend feasibility status ${normalized}`}><svg viewBox="0 0 180 105" aria-hidden="true"><path d="M22 88 A68 68 0 0 1 55 30" className="gauge-low" /><path d="M55 30 A68 68 0 0 1 125 30" className="gauge-mid" /><path d="M125 30 A68 68 0 0 1 158 88" className="gauge-high" />{angle != null && <g transform={`rotate(${angle} 90 88)`}><line x1="90" y1="88" x2="90" y2="36" /><circle cx="90" cy="88" r="7" /></g>}</svg><div className="gauge-scale" aria-hidden="true"><span>Lower</span><span>Watch</span><span>Higher</span></div><b>{label}</b><small>{normalized === 'UNKNOWN' ? 'Add revenue and costs to calculate' : `Backend status: ${normalized}`}</small></div>
 }
 function Badge({ kind }: { kind: BadgeKind }) {
   const labels: Partial<Record<BadgeKind, string>> = { 'PUBLIC DATA': 'Verified source', 'VERIFIED GOVT RULE': 'Verified source', 'CALCULATED': 'Calculated', 'ESTIMATE': 'Illustrative', 'ASSUMPTION': 'Illustrative', 'VERIFICATION REQUIRED': 'Needs verification', 'LENDER TERMS REQUIRED': 'Needs verification', 'AVAILABILITY CHECK': 'Needs verification', 'USER INPUT': 'User input' }
   return <span className={`evidence-badge ${kind.toLowerCase().replace(/ /g, '-')}`}>{labels[kind] ?? kind}</span>
 }
-function Disclaimer() { return <aside className="disclaimer"><ShieldCheck size={20} /><div><strong>Decision-support estimate</strong><p>Results are indicative. Public-data coverage may be incomplete. Final loan eligibility and sanction are determined by the relevant authority.</p></div></aside> }
+function Disclaimer({ locale = 'en' }: { locale?: Locale }) {
+  const copy = {
+    en: { title: 'Decision-support estimate', text: 'Results are indicative. Public-data coverage may be incomplete. Final loan eligibility and sanction are determined by the relevant authority.' },
+    hi: { title: 'निर्णय-सहायता अनुमान', text: 'परिणाम संकेतात्मक हैं। सार्वजनिक डेटा कवरेज अधूरा हो सकता है। अंतिम ऋण पात्रता और स्वीकृति संबंधित प्राधिकरण द्वारा तय की जाती है।' },
+    bn: { title: 'সিদ্ধান্ত-সহায়তা অনুমান', text: 'ফলাফল নির্দেশক। সরকারি ডেটা অসম্পূর্ণ হতে পারে। চূড়ান্ত ঋণ যোগ্যতা ও অনুমোদন সংশ্লিষ্ট কর্তৃপক্ষ নির্ধারণ করে।' },
+    mr: { title: 'निर्णय-सहाय्य अंदाज', text: 'परिणाम सूचक आहेत. सार्वजनिक डेटा अपूर्ण असू शकतो. अंतिम कर्ज पात्रता आणि मंजुरी संबंधित प्राधिकरण ठरवते.' },
+    ta: { title: 'முடிவு-ஆதரவு மதிப்பீடு', text: 'முடிவுகள் வழிகாட்டுதலுக்கானவை. பொது தரவு முழுமையற்றதாக இருக்கலாம். இறுதி கடன் தகுதி மற்றும் அனுமதி சம்பந்தப்பட்ட அதிகாரத்தால் தீர்மானிக்கப்படும்.' },
+  }[locale]
+  return <aside className="disclaimer"><ShieldCheck size={20} /><div><strong>{copy.title}</strong><p>{copy.text}</p></div></aside>
+}
 function ErrorState({ message }: { message: string }) { return <div className="state-box error" role="alert"><AlertTriangle size={20} /><div><strong>We could not complete this step</strong><p>{message}</p></div></div> }
 function LoadingState({ title, text }: { title: string; text: string }) { return <div className="state-box loading"><LoaderCircle className="spin" size={25} /><div><strong>{title}</strong><p>{text}</p><small>No result is shown until the source responds.</small></div></div> }
 function EmptyState({ title, text }: { title: string; text: string }) { return <div className="state-box"><Database size={24} /><div><strong>{title}</strong><p>{text}</p></div></div> }

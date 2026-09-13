@@ -15,12 +15,12 @@ class AssistantRequest(BaseModel):
     """A bounded, assessment-grounded question for the user-facing assistant."""
 
     question: str = Field(min_length=2, max_length=1000)
-    language: Literal["en", "hi"] = "en"
+    language: Literal["en", "hi", "bn", "mr", "ta"] = "en"
     assessment_context: dict[str, Any] = Field(default_factory=dict)
 
 
 class AssistantResponse(BaseModel):
     answer: str
-    language: Literal["en", "hi"]
+    language: Literal["en", "hi", "bn", "mr", "ta"]
     generated_by: Literal["gemini", "safe_fallback"]
     limitations: list[str] = Field(default_factory=list)

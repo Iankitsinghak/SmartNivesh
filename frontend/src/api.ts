@@ -108,7 +108,7 @@ export async function getMapplsAutosuggest(query: string, pod?: 'STATE' | 'DIST'
   return response.json()
 }
 
-export async function askAssessmentAssistant(payload: { question: string; language: 'en' | 'hi'; assessment_context: Record<string, unknown> }): Promise<AssessmentAssistantResponse> {
+export async function askAssessmentAssistant(payload: { question: string; language: string; assessment_context: Record<string, unknown> }): Promise<AssessmentAssistantResponse> {
   const response = await fetchWithTimeout('/api/assistant/ask', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
   }, 30_000)

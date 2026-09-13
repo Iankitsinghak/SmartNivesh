@@ -31,6 +31,7 @@ export interface CompetitorMapping {
   block_admin_level?: string
   category_id: string
   mapped_competitor_count?: number
+  analysis_point?: { latitude: number; longitude: number; source: string }
   mapped_competitors: Array<{ osm_id: string; osm_type: string; provider?: 'OPENSTREETMAP' | 'GOOGLE_PLACES' | 'GEOAPIFY'; source_feature_id?: string; name?: string; latitude?: number; longitude?: number; distance_km?: number; tags: Record<string, string> }>
   competitors_per_1000_residents?: number
   competitors_per_1000_target_customers?: number

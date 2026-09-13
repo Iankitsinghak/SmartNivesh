@@ -1,0 +1,250 @@
+/* Final homepage-only UI refinement loaded after the main stylesheet. */
+:root {
+  --display-font: "Avenir Next", "Nunito Sans", "Noto Sans", sans-serif;
+  --body-font: "Avenir Next", "Nunito Sans", "Noto Sans", "Noto Sans Devanagari", sans-serif;
+}
+
+html,
+body,
+button,
+input,
+select,
+textarea {
+  font-family: var(--body-font);
+}
+
+:where(h1, h2, h3, .brand strong, .section-label, .step-intro > span, .report-section-heading > span, .report-metric strong, .calculation-card strong, .big-stat strong) {
+  font-family: var(--display-font);
+}
+
+:where(h1, h2, h3, .brand strong) {
+  letter-spacing: -0.045em;
+}
+
+.feature-banner {
+  width: 100%;
+  max-width: none;
+  aspect-ratio: 16 / 5;
+  min-height: 0;
+  margin: 0 0 34px;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: #f7fbff;
+  box-shadow: none;
+}
+
+.feature-banner-image {
+  grid-column: 1;
+  grid-row: 1;
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-color: #f7fbff;
+}
+
+.feature-banner-copy {
+  grid-column: 1;
+  grid-row: 1;
+  z-index: 1;
+  padding: 0;
+  display: grid;
+  align-content: end;
+  justify-items: start;
+  background: transparent;
+}
+
+.feature-banner-copy > span,
+.feature-banner-copy h2,
+.feature-banner-copy p {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+}
+
+.feature-banner-controls {
+  margin: 0 0 14px 22px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,.72);
+  border: 1px solid rgba(148,163,184,.5);
+  border-radius: 999px;
+  backdrop-filter: blur(8px);
+}
+
+.feature-banner-controls > button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: var(--navy);
+  background: rgba(255,255,255,.9);
+  border: 1px solid #b8c5d6;
+  border-radius: 50%;
+}
+
+.feature-banner-controls [role='tablist'] {
+  display: flex;
+  gap: 7px;
+}
+
+.feature-banner-controls [role='tab'] {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  background: rgba(22, 58, 95, .32);
+  border: 0;
+  border-radius: 50%;
+}
+
+.feature-banner-controls [role='tab'][aria-selected='true'] {
+  width: 24px;
+  background: var(--navy);
+  border-radius: 99px;
+}
+
+.overview-intro {
+  display: block;
+  padding: 20px 0 28px;
+}
+
+.overview-intro .hero-copy {
+  max-width: 960px;
+}
+
+.overview-intro .hero-copy h1 {
+  max-width: 880px;
+  font-size: clamp(36px, 5vw, 64px);
+}
+
+.about-platform {
+  width: min(100% - 48px, 1240px);
+  margin: 0 auto 28px;
+  padding: 30px;
+  display: grid;
+  grid-template-columns: minmax(280px, .82fr) minmax(0, 1.18fr);
+  gap: 28px;
+  align-items: start;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-left: 4px solid var(--amber);
+  border-radius: 6px;
+}
+
+.about-platform h2 {
+  margin: 0 0 10px;
+  color: var(--navy);
+  font-size: clamp(24px, 3vw, 36px);
+  line-height: 1.12;
+}
+
+.about-platform p {
+  margin: 0;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.about-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.about-grid article {
+  min-height: 132px;
+  padding: 18px;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #dbe3ee;
+  border-radius: 6px;
+}
+
+.about-grid article > span {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: var(--navy);
+  border-radius: 5px;
+}
+
+.about-grid strong {
+  color: var(--navy);
+  font-size: 15px;
+}
+
+.about-grid p {
+  font-size: 12px;
+}
+
+.site-footer .footer-sources {
+  min-width: 360px;
+}
+
+.site-footer .footer-sources strong {
+  color: #fff;
+  font-size: 12px;
+}
+
+.site-footer .footer-sources div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+
+.site-footer .footer-sources a {
+  color: #dbeafe;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+@media (max-width: 850px) {
+  .feature-banner {
+    min-height: 0;
+    margin-top: 18px;
+  }
+
+  .about-platform {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .about-platform {
+    width: min(100% - 28px, 1240px);
+  }
+
+  .feature-banner {
+    min-height: 0;
+    margin-bottom: 24px;
+  }
+
+  .feature-banner-controls {
+    margin: 0 0 10px 12px;
+  }
+
+  .about-platform {
+    padding: 22px 18px;
+  }
+
+  .about-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .site-footer .footer-sources {
+    min-width: 0;
+  }
+}
