@@ -1,4 +1,4 @@
-"""Grounded Gemini explanations for SmartNivesh assessment results.
+"""Grounded Gemini explanations for VyaparSathi assessment results.
 
 The assistant does not calculate finance, create market evidence, or decide
 scheme eligibility. It explains the compact assessment context supplied by the
@@ -62,7 +62,7 @@ def answer_assessment_question(question: str, language: str, context: dict[str, 
         "ta": "Reply in clear Tamil.",
     }.get(language, "Reply in clear English.")
     prompt = (
-        "You are SmartNivesh's explanation assistant. "
+        "You are VyaparSathi's explanation assistant. "
         "Explain ONLY the assessment context below. Do not invent population, demand, revenue, prices, "
         "competitor totals, scheme eligibility, or a guarantee. Do not replace deterministic calculations. "
         "If the context marks something unavailable or unknown, say that it needs verification. "

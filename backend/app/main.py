@@ -12,7 +12,7 @@ from app.api.location import router as location_router
 from app.api.assistant import router as assistant_router
 
 app = FastAPI(
-    title="SmartNivesh Backend API",
+    title="VyaparSathi Backend API",
     description="GOLD STATE Architecture: Data-driven rural enterprise decision-support platform.",
     version="1.0.0"
 )
