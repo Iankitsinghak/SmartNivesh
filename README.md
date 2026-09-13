@@ -1,5 +1,7 @@
 # VyaparSathi
 
+**Official product name:** VyaparSathi
+
 ## Evidence-led business planning for India's local entrepreneurs
 
 VyaparSathi is a modular monolith with a React/Vite frontend and FastAPI backend. It is a decision-support platform for evaluating rural and local enterprise ideas, bringing location intelligence, market signals, financial modelling, government schemes, and risk checks into one explainable workflow so an entrepreneur can move from **“Is this viable here?”** to a practical next step.
