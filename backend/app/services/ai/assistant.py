@@ -53,7 +53,12 @@ def answer_assessment_question(question: str, language: str, context: dict[str, 
     key = os.getenv("GEMINI_API_KEY")
     if not key:
         return _fallback(language)
-    model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+    # This is a short, constrained explanation rather than a reasoning task.
+    # Gemini 3.5 Flash-Lite is the configured project's fastest high-throughput
+    # text model. Its low thinking level keeps this conversational report
+    # assistant responsive. An operator may still select another supported
+    # Gemini model in .env.
+    model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
     language_instruction = {
         "en": "Reply in clear English.",
         "hi": "Reply in clear Hindi.",
@@ -66,8 +71,8 @@ def answer_assessment_question(question: str, language: str, context: dict[str, 
         "Explain ONLY the assessment context below. Do not invent population, demand, revenue, prices, "
         "competitor totals, scheme eligibility, or a guarantee. Do not replace deterministic calculations. "
         "If the context marks something unavailable or unknown, say that it needs verification. "
-        "Start with the direct answer, then give the relevant evidence and a final 'What to do next' sentence. "
-        "Use one complete plain-text paragraph of 50 to 90 words; do not use Markdown, headings, bullet points, or unfinished sentences. "
+        "Start with the direct answer, then give the relevant evidence and a final next-step sentence. "
+        "Use one complete plain-text paragraph of at most 90 words; do not use Markdown, headings, bullet points, or unfinished sentences. "
         + language_instruction
         + "\n\nAssessment context:\n"
         + json.dumps(_compact_context(context), ensure_ascii=False, default=str)
@@ -77,7 +82,13 @@ def answer_assessment_question(question: str, language: str, context: dict[str, 
     def generate(instruction: str) -> str:
         body = json.dumps({
             "contents": [{"parts": [{"text": instruction}]}],
-            "generationConfig": {"temperature": 0.2, "maxOutputTokens": 1600},
+            # A small bounded response and low thinking level keep response
+            # times conversational while the prompt maintains grounding.
+            "generationConfig": {
+                "temperature": 0.2,
+                "maxOutputTokens": 320,
+                "thinkingConfig": {"thinkingLevel": "LOW"},
+            },
         }).encode("utf-8")
         request = Request(
             f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
@@ -86,7 +97,7 @@ def answer_assessment_question(question: str, language: str, context: dict[str, 
             method="POST",
         )
         try:
-            with urlopen(request, timeout=20, context=ssl.create_default_context(cafile=certifi.where())) as response:
+            with urlopen(request, timeout=12, context=ssl.create_default_context(cafile=certifi.where())) as response:
                 payload = json.loads(response.read().decode("utf-8"))
         except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
             raise AssistantUnavailable("The explanation service could not complete the request.") from exc
@@ -94,20 +105,9 @@ def answer_assessment_question(question: str, language: str, context: dict[str, 
         parts = candidates[0].get("content", {}).get("parts", []) if isinstance(candidates, list) and candidates else []
         return "".join(part.get("text", "") for part in parts if isinstance(part, dict)).strip()
 
+    # Exactly one model request per question.  The previous repair loop could
+    # turn one click into four serial requests (up to 80 seconds total).
     text = generate(prompt)
-    # Some provider/model combinations can end an otherwise successful response
-    # mid-sentence. Continue only those incomplete responses, retaining the same
-    # constrained context and never fabricating a local fact.
-    for _ in range(3):
-        if text.endswith((".", "!", "?", "।")) and len(text.split()) >= 35:
-            break
-        continuation = generate(
-            prompt + "\n\nPartial answer already shown to the user:\n" + text
-            + "\n\nContinue from the exact last word without repeating it. Finish the current sentence and provide the remaining concise answer. End with punctuation."
-        )
-        if not continuation:
-            break
-        text = f"{text} {continuation}".strip()
     if not text:
         raise AssistantUnavailable("The explanation service returned no usable answer.")
     first_next_step = text.lower().find("what to do next")

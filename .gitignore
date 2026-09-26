@@ -10,5 +10,7 @@ backend/.lookup-cache/
 backend/data/census_2011.sqlite
 backend/data/osm_competitors.sqlite
 backend/data/*.importing
+backend/data/*.osm.pbf
+.pnpm-store/
 vyaparsathi.db
 backend/vyaparsathi.db

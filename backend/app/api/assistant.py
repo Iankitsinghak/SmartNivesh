@@ -15,7 +15,11 @@ logger = logging.getLogger(__name__)
 @router.post("/ask", response_model=AssistantResponse)
 async def ask_assessment_assistant(request: AssistantRequest) -> AssistantResponse:
     try:
-        return answer_assessment_question(request.question, request.language, request.assessment_context)
+        return answer_assessment_question(
+            request.question,
+            request.language,
+            request.assessment_context,
+        )
     except AssistantUnavailable as exc:
         logger.info("Assessment assistant unavailable: %s", exc)
         # A transient upstream AI outage must not make the assessment unusable.

@@ -14,6 +14,7 @@ from app.schemas.market import (
     MarketAnalysisResponse,
     ProductMarketValueRequest,
     ProductMarketValueResponse,
+    AlternativeRecommendationRequest,
 )
 from app.services.market.market_engine import analyze_market
 from app.services.market.live_competitor_mapping import (
@@ -22,6 +23,7 @@ from app.services.market.live_competitor_mapping import (
     resolve_administrative_location,
 )
 from app.services.market.product_market_value import analyze_product_market_value
+from app.services.market.alternative_recommendations import recommend_lower_risk_categories
 from app.services.demographics.census_2011 import local_demographics
 
 router = APIRouter(prefix="/api/market", tags=["Market Intelligence"])
@@ -80,6 +82,15 @@ async def competitor_mapping_endpoint(request: CompetitorMappingRequest):
 async def product_market_value_endpoint(request: ProductMarketValueRequest):
     """Return an evidence-gated regional price reference for a selected category."""
     return await asyncio.to_thread(analyze_product_market_value, request)
+
+
+@router.post("/lower-risk-alternatives")
+async def lower_risk_alternatives(request: AlternativeRecommendationRequest):
+    """Queue one deduplicated live lookup for lower-competition categories."""
+    return await lookup(
+        "lower-risk-alternatives", request.model_dump(),
+        lambda: recommend_lower_risk_categories(request), 3600,
+    )
 
 
 @router.get("/india-administrative/{level}", response_model=IndiaAdministrativeOptionsResponse)

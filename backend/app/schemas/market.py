@@ -300,3 +300,33 @@ class ProductMarketValueResponse(BaseModel):
     methodology: List[str] = []
     limitations: List[str] = []
     data_provenance: List[DataProvenance] = []
+
+
+class AlternativeRecommendationRequest(BaseModel):
+    """Find lower-competition category alternatives at the current map point."""
+
+    latitude: float = Field(ge=-90, le=90)
+    longitude: float = Field(ge=-180, le=180)
+    category_id: str
+    radius_km: int = Field(default=10, ge=2, le=10)
+    current_mapped_competitor_count: int = Field(ge=0)
+
+
+class AlternativeBusinessCategory(BaseModel):
+    category_id: str
+    name: str
+    mapped_competitor_count: int = Field(ge=0)
+    market_risk_score: int = Field(ge=0, le=100)
+    fit_score: int = Field(ge=0, le=100)
+
+
+class AlternativeRecommendationResponse(BaseModel):
+    """Evidence-bounded alternatives shown only when local market risk is high."""
+
+    status: Literal["AVAILABLE", "INSUFFICIENT"]
+    current_market_risk_score: int = Field(ge=0, le=100)
+    risk_level: Literal["HIGH", "NOT_HIGH", "UNKNOWN"]
+    alternatives: List[AlternativeBusinessCategory] = []
+    methodology: List[str] = []
+    limitations: List[str] = []
+    data_provenance: List[DataProvenance] = []

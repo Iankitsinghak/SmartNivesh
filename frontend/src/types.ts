@@ -132,6 +132,24 @@ export interface ProductMarketValue {
   data_provenance: Array<{ source_id: string; source_name: string; source_url?: string; data_type: string; confidence: string; notes?: string }>
 }
 
+export interface LowerRiskAlternative {
+  category_id: string
+  name: string
+  mapped_competitor_count: number
+  market_risk_score: number
+  fit_score: number
+}
+
+export interface LowerRiskAlternatives {
+  status: 'AVAILABLE' | 'INSUFFICIENT'
+  current_market_risk_score: number
+  risk_level: 'HIGH' | 'NOT_HIGH' | 'UNKNOWN'
+  alternatives: LowerRiskAlternative[]
+  methodology: string[]
+  limitations: string[]
+  data_provenance: Array<{ source_id: string; source_name: string; source_url?: string; data_type: string; confidence: string; notes?: string }>
+}
+
 export type ActivityType = 'service_or_trading' | 'manufacturing' | 'food_processing' | 'traditional_artisan' | 'not_sure'
 export type AreaType = 'rural' | 'urban' | 'not_sure'
 export type PMEGPBeneficiaryGroup = 'general' | 'special' | 'not_sure'

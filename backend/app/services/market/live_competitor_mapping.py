@@ -732,6 +732,28 @@ area({block.osm_area_id})->.block;
 out center tags;"""
         return self.query(query, timeout_seconds=self._feature_query_timeout())
 
+    def mapped_competitors_nearby(
+        self, latitude: float, longitude: float, radius_km: int, osm_tags: Iterable[dict[str, str]]
+    ) -> list[dict[str, Any]]:
+        """Fetch all configured competitor tags once around an analysis point."""
+        clauses = []
+        for tag in osm_tags:
+            if len(tag) != 1:
+                continue
+            key, value = next(iter(tag.items()))
+            clauses.append(
+                f'nwr(around:{radius_km * 1000},{latitude:.6f},{longitude:.6f})'
+                f'["{_ql_string(key)}"="{_ql_string(value)}"];'
+            )
+        if not clauses:
+            raise LiveDataUnavailable("No live OpenStreetMap mapping rules are configured.")
+        query = f"""[out:json][timeout:60];
+(
+  {' '.join(clauses)}
+);
+out center tags;"""
+        return self.query(query, timeout_seconds=self._feature_query_timeout())
+
     def commercial_features(self, block: BlockBoundary) -> list[dict[str, Any]]:
         query = f"""[out:json][timeout:60];
 area({block.osm_area_id})->.block;

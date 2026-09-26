@@ -8,6 +8,7 @@ import sqlite3
 import unicodedata
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Optional
 
@@ -19,6 +20,25 @@ from app.schemas.market import LocalDemographicsResponse
 
 SOURCE_URL = "https://censusindia.gov.in/nada/index.php/catalog/42559"
 SOURCE_NAME = "Census of India 2011 Primary Census Abstract"
+
+# The local-government hierarchy uses current district names, while the supplied
+# Census workbook uses the 2011 names.  These aliases only bridge a known rename
+# or split predecessor; the requested sub-district must still match before a
+# Census record can be returned.
+_LEGACY_DISTRICT_KEYS = {
+    "cooch behar": "koch bihar",
+    "howrah": "haora",
+    "hooghly": "hugli",
+    "malda": "maldah",
+    "purulia": "puruliya",
+    "north 24 parganas": "north twenty four parganas",
+    "south 24 parganas": "south twenty four parganas",
+    "purba bardhaman": "barddhaman",
+    "paschim bardhaman": "barddhaman",
+    "jhargram": "paschim medinipur",
+    "kalimpong": "darjiling",
+    "alipurduar": "jalpaiguri",
+}
 
 
 def _database_path() -> Path:
@@ -53,17 +73,51 @@ def _provenance() -> DataProvenance:
     )
 
 
+def _consonants(value: str) -> str:
+    return "".join(character for character in value if character not in "aeiou")
+
+
+def _resolve_key(db: sqlite3.Connection, column: str, value: object, where: str, parameters: tuple[object, ...]) -> Optional[str]:
+    requested = normalize(value)
+    if not requested:
+        return None
+    rows = db.execute(
+        f"SELECT DISTINCT {column} FROM census_geo WHERE {where} AND {column} IS NOT NULL",
+        parameters,
+    ).fetchall()
+    candidates = [str(row[0]) for row in rows]
+    if requested in candidates:
+        return requested
+    legacy_key = _LEGACY_DISTRICT_KEYS.get(requested) if column == "district_key" else None
+    if legacy_key in candidates:
+        return legacy_key
+    if not candidates:
+        return None
+
+    def score(candidate: str) -> float:
+        direct = SequenceMatcher(None, requested, candidate).ratio()
+        phonetic = SequenceMatcher(None, _consonants(requested), _consonants(candidate)).ratio()
+        return max(direct, phonetic)
+
+    ranked = sorted(((score(candidate), candidate) for candidate in candidates), reverse=True)
+    best_score, best_candidate = ranked[0]
+    second_score = ranked[1][0] if len(ranked) > 1 else 0.0
+    if best_score >= 0.72 and best_score - second_score >= 0.08:
+        return best_candidate
+    return None
+
+
 def administrative_options(
     level: str, parent_id: Optional[str], state_name: Optional[str], district_name: Optional[str]
 ) -> Optional[IndiaAdministrativeOptionsResponse]:
     """Return Census district or sub-district choices without a network call."""
     if not available() or level not in {"district", "block"}:
         return None
-    state_key = normalize(state_name)
-    district_key = normalize(district_name)
-    if not state_key or (level == "block" and not district_key):
-        return None
     with _connection() as db:
+        state_key = _resolve_key(db, "state_key", state_name, "1=1", ())
+        district_key = _resolve_key(db, "district_key", district_name, "state_key=?", (state_key,)) if state_key else None
+        if not state_key or (level == "block" and not district_key):
+            return None
         if level == "district":
             rows = db.execute(
                 "SELECT state_code, district_code, name FROM census_geo "
@@ -105,8 +159,15 @@ def subdistrict_snapshot(state_name: str, district_name: str, subdistrict_name: 
     """Return the rural sub-district row, falling back to the total row if rural is absent."""
     if not available():
         return None
-    state_key, district_key, subdistrict_key = map(normalize, (state_name, district_name, subdistrict_name))
     with _connection() as db:
+        state_key = _resolve_key(db, "state_key", state_name, "1=1", ())
+        district_key = _resolve_key(db, "district_key", district_name, "state_key=?", (state_key,)) if state_key else None
+        subdistrict_key = (
+            _resolve_key(db, "name_key", subdistrict_name, "level='SUB-DISTRICT' AND state_key=? AND district_key=?", (state_key, district_key))
+            if state_key and district_key else None
+        )
+        if not state_key or not district_key or not subdistrict_key:
+            return None
         row = db.execute(
             "SELECT * FROM census_geo WHERE level='SUB-DISTRICT' AND state_key=? AND district_key=? AND name_key=? "
             "ORDER BY CASE tru WHEN 'Rural' THEN 0 WHEN 'Total' THEN 1 ELSE 2 END LIMIT 1",

@@ -75,7 +75,7 @@ inject the values before starting Uvicorn.
 ## Response semantics
 
 mapped_competitor_count is an observed OpenStreetMap count, not a claim that
-every business in the block has been captured. competitors_per_1000_residents
+every business in the block has been captured.competitors_per_1000_residents
 uses Census 2011 rural village population aggregated by CD block. Statutory-town
 residents are excluded, and 2011 CD-block boundaries may differ from current OSM
 boundaries. The commercial-feature ratio is calculated from observed OSM

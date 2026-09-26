@@ -734,6 +734,24 @@ a { color: var(--green); }
 .risk-guide-grid article > span { color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; }
 .risk-guide-grid article > strong { display: block; margin-top: 7px; color: var(--navy); font-size: 15px; }
 .risk-guide-grid article p { margin-top: 9px; }
+.lower-risk-alternatives { border: 1px solid #cbd5e1; background: #fff; }
+.alternative-summary { display: flex; justify-content: space-between; gap: 24px; padding: 20px 22px; background: #f3f6ff; border-bottom: 1px solid #cbd5e1; }
+.alternative-summary h3 { margin: 7px 0 5px; color: var(--navy); font-size: 18px; }
+.alternative-summary p { max-width: 680px; margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.alternative-summary > strong { align-self: center; color: var(--navy); font-size: 32px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.alternative-summary > strong small, .alternative-scores strong small { font-size: .5em; color: var(--muted); }
+.alternative-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.alternative-grid article { position: relative; min-width: 0; padding: 21px; border-right: 1px solid var(--line); }
+.alternative-grid article:last-child { border-right: 0; }
+.alternative-rank { display: block; margin-bottom: 20px; color: var(--amber); font-size: 11px; font-weight: 800; letter-spacing: .12em; }
+.alternative-grid h4 { margin: 0 0 16px; color: var(--navy); font-size: 16px; line-height: 1.3; }
+.alternative-scores { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.alternative-scores > div { padding: 10px; background: #f7faf7; border-left: 3px solid var(--green); }
+.alternative-scores > div + div { border-left-color: #d97706; }
+.alternative-scores span { display: block; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; }
+.alternative-scores strong { display: block; margin-top: 4px; color: var(--navy); font-size: 20px; font-variant-numeric: tabular-nums; }
+.alternative-grid p { margin: 15px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.lower-risk-alternatives .method-note { margin: 0; padding: 14px 20px; border-top: 1px solid var(--line); }
 
 @media (max-width: 850px) {
   .start-hero { grid-template-columns: 1fr; gap: 32px; padding-top: 48px; }
@@ -747,6 +765,10 @@ a { color: var(--green); }
   .report-header { display: block; }
   .report-header dl { margin-top: 24px; }
   .risk-guide-grid { grid-template-columns: 1fr; }
+  .alternative-summary { align-items: flex-start; }
+  .alternative-grid { grid-template-columns: 1fr; }
+  .alternative-grid article, .alternative-grid article:last-child { border-right: 0; border-bottom: 1px solid var(--line); }
+  .alternative-grid article:last-child { border-bottom: 0; }
 }
 
 @media (max-width: 620px) {

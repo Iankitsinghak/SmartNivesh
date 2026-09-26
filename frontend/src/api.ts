@@ -1,4 +1,4 @@
-import type { AdministrativeLocation, AssessmentAssistantResponse, CompetitorMapping, FinancialIntelligence, FinancialRoadmap, FinancialRoadmapRequest, HealthState, IndiaAdministrativeOptions, LocalDemographics, MapplsAutosuggestResponse, MarketAnalysis, ProductMarketValue } from './types'
+import type { AdministrativeLocation, AssessmentAssistantResponse, CompetitorMapping, FinancialIntelligence, FinancialRoadmap, FinancialRoadmapRequest, HealthState, IndiaAdministrativeOptions, LocalDemographics, LowerRiskAlternatives, MapplsAutosuggestResponse, MarketAnalysis, ProductMarketValue } from './types'
 import { INDIA_STATES_RESPONSE } from './indiaStates'
 
 const ADMINISTRATIVE_CACHE_VERSION = 'v3-census-2011'
@@ -84,6 +84,14 @@ export async function mapLiveCompetitors(payload: { latitude: number; longitude:
   })
 }
 
+export async function getLowerRiskAlternatives(payload: { latitude: number; longitude: number; category_id: string; radius_km: number; current_mapped_competitor_count: number }): Promise<LowerRiskAlternatives> {
+  return pollLookup<LowerRiskAlternatives>('/api/market/lower-risk-alternatives', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
 export async function resolveAdministrativeLocation(payload: { state_name: string; district_name: string; block_name: string }): Promise<AdministrativeLocation> {
   const response = await fetchWithTimeout('/api/market/resolve-administrative-location', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
@@ -111,7 +119,7 @@ export async function getMapplsAutosuggest(query: string, pod?: 'STATE' | 'DIST'
 export async function askAssessmentAssistant(payload: { question: string; language: string; assessment_context: Record<string, unknown> }): Promise<AssessmentAssistantResponse> {
   const response = await fetchWithTimeout('/api/assistant/ask', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
-  }, 30_000)
+  }, 15_000)
   if (!response.ok) {
     const error = await response.json().catch(() => ({}))
     throw new Error(error.detail || 'The explanation service is temporarily unavailable.')

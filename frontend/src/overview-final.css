@@ -211,6 +211,32 @@ textarea {
   font-weight: 650;
 }
 
+/* Brand and decision CTA refinement. */
+.brand-logo {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(15, 74, 48, .18));
+}
+
+.hero-start-button {
+  min-height: 54px;
+  margin-top: 8px;
+  padding: 0 24px;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.site-footer { display: grid; grid-template-columns: minmax(190px, .7fr) minmax(230px, 1fr) minmax(260px, 1.1fr); }
+.site-footer .footer-brand { display: flex; align-items: flex-start; gap: 12px; }
+.footer-brand img { width: 46px; height: 46px; object-fit: contain; }
+.footer-navigation { min-width: 0; }
+.footer-navigation strong { display: block; margin-bottom: 9px; color: #fff; font-size: 12px; }
+.footer-navigation div { display: flex; flex-wrap: wrap; gap: 7px 14px; }
+.footer-navigation button { padding: 0; color: #dbeafe; background: transparent; border: 0; font-size: 11px; font-weight: 650; text-align: left; }
+.footer-navigation button:hover, .footer-navigation button:focus-visible { color: #fff; text-decoration: underline; }
+.site-footer > p { grid-column: 1 / -1; max-width: 100%; margin-top: 8px; text-align: left; }
+
 @media (max-width: 850px) {
   .feature-banner {
     min-height: 0;
@@ -220,6 +246,9 @@ textarea {
   .about-platform {
     grid-template-columns: 1fr;
   }
+
+  .site-footer { grid-template-columns: 1fr 1fr; }
+  .site-footer > p { grid-column: 1 / -1; }
 }
 
 @media (max-width: 620px) {
@@ -247,4 +276,7 @@ textarea {
   .site-footer .footer-sources {
     min-width: 0;
   }
+
+  .site-footer { grid-template-columns: 1fr; }
+  .site-footer > p { grid-column: auto; }
 }
